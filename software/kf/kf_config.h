@@ -1,0 +1,1 @@
+#define KF_MAX_MATRIX_SIZE 3

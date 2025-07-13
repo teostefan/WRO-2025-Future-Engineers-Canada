@@ -1,0 +1,23 @@
+{
+  "files.associations": {
+    "*.ejs": "html",
+    "*.tpl": "html",
+    "*.ino": "cpp",
+    "array": "c",
+    "memory": "c",
+    "format": "c",
+    "istream": "c",
+    "functional": "c",
+    "tuple": "c",
+    "utility": "c",
+    "variant": "c",
+    "cmath": "cpp",
+    "cv_config.h": "c",
+    "io.h": "c",
+    "pid.h": "c",
+    "chrono": "c",
+    "cstdio": "c"
+  },
+  "C_Cpp.clang_format_style": "{ BasedOnStyle: LLVM, BreakBeforeBraces: Attach, AllowShortIfStatementsOnASingleLine: true, IndentWidth: 4, UseTab: Never, ColumnLimit: 0 }",
+  "editor.formatOnSave": true
+}

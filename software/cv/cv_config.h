@@ -1,3 +1,6 @@
 #define CV_FRAME_WIDTH 640
 #define CV_FRAME_HEIGHT 480
 #define CV_MAX_BOUNDING_BOXES 100
+
+#define RED 1
+#define GREEN 0

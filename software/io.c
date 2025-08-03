@@ -1,4 +1,7 @@
-#include "io.h"
+#ifndef IO_C
+#define IO_C
+
+#include "globals.h"
 
 struct CameraData IO_readCamera() {
     // unfinished
@@ -71,3 +74,5 @@ int IO_writeToSteeringMotor(float angle, int direction) {
 
     return 0;
 }
+
+#endif // IO_C

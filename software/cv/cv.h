@@ -75,6 +75,17 @@ typedef struct {
 } CV_bounding_box_list;
 
 /**
+ * @brief A struct that defines what data is read from the camera.
+ */
+struct CV_CameraData {
+    int obstacle_spotted;
+    int obstacle_x_1;
+    int obstacle_x_2;
+    int obstacle_y;
+    int obstacle_colour;
+};
+
+/**
  * @brief A macro to iterate over each pixel in a frame.
  *
  * @param x The variable that will get assigned the x-coordinate of the pixel.

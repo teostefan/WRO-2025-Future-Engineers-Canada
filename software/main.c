@@ -1,5 +1,6 @@
 #include "challenges.c"
 #include "globals.h"
+#include "io.c"
 
 int main() {
     // set startDirection to CLOCKWISE if left TOF sees edge of track, COUNTERCLOCKWISE if right TOF sees it instead

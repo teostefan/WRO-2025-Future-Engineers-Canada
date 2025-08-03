@@ -90,13 +90,13 @@ typedef enum {
 /* ------------------------------------------------------------ *
  * external function prototypes for I2C bus communication code  *
  * ------------------------------------------------------------ */
-extern void BNO_init_i2cbus(char *, char *); // get the I2C bus file handle
-extern int BNO_get_mag(struct bnomag *);     // read magnetometer data
-extern int BNO_get_eul(struct bnoeul *);     // read euler orientation
-extern int BNO_set_mode(opmode_t);           // set the sensor ops mode
-extern int BNO_set_power(power_t);           // set the sensor power mode
-extern int BNO_get_sstat();                  // get system status code
-extern int BNO_print_sstat(int);             // print system status string
-extern int BNO_reset();                      // reset the sensor
+extern void BNO_init_i2cbus(char *, char *);                                             // get the I2C bus file handle
+extern int BNO_get_mag(struct bnomag *);                                                 // read magnetometer data
+extern int BNO_get_eul(struct bnoeul *, int startDirection, int direction, int stretch); // read euler orientation
+extern int BNO_set_mode(opmode_t);                                                       // set the sensor ops mode
+extern int BNO_set_power(power_t);                                                       // set the sensor power mode
+extern int BNO_get_sstat();                                                              // get system status code
+extern int BNO_print_sstat(int);                                                         // print system status string
+extern int BNO_reset();                                                                  // reset the sensor
 
 #endif // GYRO_H

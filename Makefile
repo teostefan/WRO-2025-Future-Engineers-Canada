@@ -16,14 +16,14 @@ $(OUT): $(SRC) software/kf/kf_matrix.h
 	$(CC) $(CFLAGS) -o $(OUT) $(SRC)
 	@echo -e "\033[1;32mBuild successful!\033[0m"
 
-builds/test_cv: software/test_cv.c software/cv/cv.c
+builds/test_cv: software/cv/test_cv.c software/cv/cv.c
 	@echo -ne "\033[1;34m[3] - Compiling test_cv: \033[0m"
-	$(CC) $(CFLAGS) -o builds/test_cv software/test_cv.c software/cv/cv.c
+	$(CC) $(CFLAGS) -o builds/test_cv software/cv/test_cv.c software/cv/cv.c
 	@echo -e "\033[1;32mtest_cv build successful!\033[0m"
 
-builds/test_kf: software/test_kf.c software/kf/kf.c software/kf/kf_matrix.c
+builds/test_kf: software/kf/test_kf.c software/kf/kf.c software/kf/kf_matrix.c
 	@echo -ne "\033[1;34m[4] - Compiling test_kf: \033[0m"
-	$(CC) $(CFLAGS) -o builds/test_kf software/test_kf.c software/kf/kf.c software/kf/kf_matrix.c -lm
+	$(CC) $(CFLAGS) -o builds/test_kf software/kf/test_kf.c software/kf/kf.c software/kf/kf_matrix.c -lm
 	@echo -e "\033[1;32mtest_kf build successful!\033[0m"
 
 software/kf/kf_matrix.h: .FORCE

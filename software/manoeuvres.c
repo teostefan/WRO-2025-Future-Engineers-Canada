@@ -2,6 +2,7 @@
 #define MANOEUVRES_C
 
 #include "globals.h"
+#include "io.c"
 
 int pullOut() {
     // Leave parking lot at the beginning of the obstacle challenge

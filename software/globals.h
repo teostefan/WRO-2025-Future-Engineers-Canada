@@ -6,6 +6,7 @@
 
 #include "cv/cv.h"
 #include "cv/cv_config.h"
+#include "gyro/gyro.h"
 #include "io/io.h"
 #include "pid/pid.h"
 
@@ -90,9 +91,31 @@
 #define KI 0
 #define KD 0
 
+#define FRONT 1
+#define REAR 0
+
+#define RIGHT 1
+#define LEFT 0
+
+#define VERTICAL 1
+#define HORIZONTAL 0
+
+#define CLOCKWISE 1
+#define COUNTERCLOCKWISE 0
+
+#define FORWARDS 1
+#define BACKWARDS 0
+
+#define WIDE 1
+#define TIGHT 0
+
+#define TOTAL_LAP_NUMBER 3
+#define LAP_TURN_NUMBER 4
+
 int startDirection;
 int map[4][2];
 int stretch;
 struct PID_Controller pid = {KP, KI, KD, 0.0f, 0.0f};
+struct CV_Camera_Data cv_data = {0, 0, 0, 0, 0};
 
 #endif // GLOBALS_H

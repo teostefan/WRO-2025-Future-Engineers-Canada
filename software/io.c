@@ -3,9 +3,9 @@
 
 #include "globals.h"
 
-struct CameraData IO_readCamera() {
+struct CV_CameraData IO_readCamera() {
     // unfinished
-    struct CameraData cameraData;
+    struct CV_CameraData cameraData;
 
     return cameraData;
 }

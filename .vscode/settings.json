@@ -13,7 +13,6 @@
     "variant": "c",
     "cmath": "cpp",
     "cv_config.h": "c",
-    "io.h": "c",
     "pid.h": "c",
     "chrono": "c",
     "cstdio": "c"

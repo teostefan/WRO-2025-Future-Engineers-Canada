@@ -19,13 +19,21 @@ int main() {
     while (frame_count++ < 100) {                     // Limit to 100 frames for demonstration
         if (!CV_getHSVframe(frame, camera)) return 0; // Load an HSV frame.
 
-        CV_chromakey(mask, frame, (unsigned char[]){33, 3}, (unsigned char[]){20, 80}, (unsigned char[]){20, 80});
+        CV_chromakey(mask, frame, (unsigned char[]){350, 359}, (unsigned char[]){75, 85}, (unsigned char[]){85, 95});
 
         CV_masktracker(&bboxes, mask, 50);
 
         if (!CV_getRGBframe(frame, camera)) return 0; // Load an RGB frame for display.
 
         CV_drawbb(frame, &bboxes, (unsigned char[]){255, 0, 0}); // Draw bounding boxes in red.
+
+        CV_chromakey(mask, frame, (unsigned char[]){105, 115}, (unsigned char[]){75, 85}, (unsigned char[]){75, 85});
+
+        CV_masktracker(&bboxes, mask, 50);
+
+        if (!CV_getRGBframe(frame, camera)) return 0; // Load an RGB frame for display.
+
+        CV_drawbb(frame, &bboxes, (unsigned char[]){0, 255, 0}); // Draw bounding boxes in green.
 
         CV_playframe(player, frame); // Play the frame.
         /*

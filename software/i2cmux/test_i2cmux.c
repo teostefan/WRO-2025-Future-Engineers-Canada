@@ -4,7 +4,7 @@
 int main() {
     popen("i2cdetect -y 1", "r");
 
-    int i = i2cmux_switch(1, 0); // First number is the i2c bus, second is the channel number.
+    int i = i2cmux_switch(0); // First number is the i2c bus, second is the channel number.
 
     if (i != 1) {
         printf("Error switching MUX.");

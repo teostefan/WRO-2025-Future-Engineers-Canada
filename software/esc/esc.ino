@@ -112,7 +112,7 @@ void receiveData(int bytecount) { // Event when we recieve an I²C write.
 }
 
 void sendData() { // If we try to read from any I²C address, just return the tachometer counter.
-    // Split tachometer counter into four bytes (litle-endian; least significant byte first).
+    // Split tachometer counter into four bytes (little-endian; least significant byte first).
     char output[4];
 
     output[0] = tachometer_acc & 0xFF;

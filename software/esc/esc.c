@@ -1,5 +1,25 @@
 #include "esc.h"
 
+int esc_enable() {
+    char command[128];
+    sprintf(command, "echo \"%d\" > /sys/class/gpio/export && echo \"out\" > /sys/class/gpio/gpio%d/direction && echo \"1\" > /sys/class/gpio/gpio%d/value", esc_GPIO_PIN, esc_GPIO_PIN, esc_GPIO_PIN);
+    if (!popen(command, "w")) {
+        fprintf(stderr, "ESC Error - Failed to enable the ESC; try running as sudo.\n");
+        return 0;
+    }
+    return 1;
+}
+
+int esc_disable() {
+    char command[128];
+    sprintf(command, "echo \"%d\" > /sys/class/gpio/unexport && echo \"0\" > /sys/class/gpio/gpio%d/value", esc_GPIO_PIN, esc_GPIO_PIN);
+    if (!popen(command, "w")) {
+        fprintf(stderr, "ESC Error - Failed to disable the ESC; try running as sudo.\n");
+        return 0;
+    }
+    return 1;
+}
+
 int esc_set_speed(unsigned char speed) {
     static int file_i2c = 0;
     char filename[32];
@@ -164,5 +184,40 @@ int esc_tach_read(unsigned long *counter) {
 
     close(file_i2c);
     file_i2c = -1;
+    return 1;
+}
+
+int esc_servo_steer(int angle) {
+    // Steer the connected to PWM pin 13 servo to the specified angle.
+    angle += esc_STEERING_SERVO_OFFSET;
+
+    if (angle < esc_STEERING_SERVO_MIN) angle = esc_STEERING_SERVO_MIN;
+    if (angle > esc_STEERING_SERVO_MAX) angle = esc_STEERING_SERVO_MAX;
+
+    // dutycycle in nanoseconds
+    int duty_cycle = (int)(1500000 + (angle * (500000 / 45))); // 1.5ms is center, 0.5ms per 45 degrees
+    int period = 20000000;                                     // 20ms period
+
+    char command[256];
+    sprintf(command, "echo \"%d\" > /sys/class/pwm/pwmchip0/export && echo \"%d\" > /sys/class/pwm/pwmchip0/pwm%d/period && echo \"%d\" > /sys/class/pwm/pwmchip0/pwm%d/duty_cycle && echo \"1\" > /sys/class/pwm/pwmchip0/pwm%d/enable", esc_STEERING_SERVO_PIN, period, esc_STEERING_SERVO_PIN, duty_cycle, esc_STEERING_SERVO_PIN, esc_STEERING_SERVO_PIN);
+
+    if (!popen(command, "w")) {
+        fprintf(stderr, "ESC Error - Failed to set steering servo angle; try running as sudo.\n");
+        return 0;
+    }
+
+    return 1;
+}
+
+int esc_servo_stop() {
+    // Stop the steering servo.
+    char command[128];
+    sprintf(command, "echo \"0\" > /sys/class/pwm/pwmchip0/pwm%d/enable && echo \"%d\" > /sys/class/pwm/pwmchip0/pwm%d/unexport", esc_STEERING_SERVO_PIN, esc_STEERING_SERVO_PIN, esc_STEERING_SERVO_PIN);
+
+    if (!popen(command, "w")) {
+        fprintf(stderr, "ESC Error - Failed to stop steering servo; try running as sudo.\n");
+        return 0;
+    }
+
     return 1;
 }

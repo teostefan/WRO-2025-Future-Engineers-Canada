@@ -1,8 +1,8 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -O2 -Isoftware
-SRC = software/main.c software/cv/cv.c software/kf/kf.c software/kf/kf_matrix.c software/pid/pid.c software/i2cmux/i2cmux.c software/esc/esc.c
+SRC = software/main.c software/cv/cv.c software/kf/kf.c software/kf/kf_matrix.c software/pid/pid.c software/i2cmux/i2cmux.c software/gyro/gyro.c software/esc/esc.c
 OUT = builds/main
-TESTS = builds/test_cv builds/test_tof builds/test_i2cmux builds/test_esc builds/test_kf
+TESTS = builds/test_cv builds/test_tof builds/test_i2cmux builds/test_gyro builds/test_esc builds/test_kf
 
 # Ensure builds directory exists before building.
 $(shell mkdir -p builds)
@@ -30,6 +30,11 @@ builds/test_tof: software/tof/test_tof.c software/tof/tof.c
 	@echo -ne "\033[1;34m[3] - Compiling test_tof: \033[0m"
 	$(CC) $(CFLAGS) -o builds/test_tof software/tof/test_tof.c software/tof/tof.c
 	@echo -e "\033[1;32mtest_tof build successful!\033[0m"
+
+builds/test_gyro: software/gyro/test_gyro.c software/gyro/gyro.c
+	@echo -ne "\033[1;34m[3] - Compiling test_gyro: \033[0m"
+	$(CC) $(CFLAGS) -o builds/test_gyro software/gyro/test_gyro.c software/gyro/gyro.c -lm
+	@echo -e "\033[1;32mtest_gyro build successful!\033[0m"
 
 builds/test_i2cmux: software/i2cmux/test_i2cmux.c software/i2cmux/i2cmux.c
 	@echo -ne "\033[1;34m[3] - Compiling test_i2cmux: \033[0m"

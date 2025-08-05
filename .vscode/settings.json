@@ -17,7 +17,11 @@
     "chrono": "c",
     "cstdio": "c",
     "i2c-dev.h": "c",
-    "cv.h": "c"
+    "cv.h": "c",
+    "fcntl.h": "c",
+    "unistd.h": "c",
+    "ioctl.h": "c",
+    "stdlib.h": "c"
   },
   "C_Cpp.clang_format_style": "{ BasedOnStyle: LLVM, BreakBeforeBraces: Attach, AllowShortIfStatementsOnASingleLine: true, IndentWidth: 4, UseTab: Never, ColumnLimit: 0 }",
   "editor.formatOnSave": true

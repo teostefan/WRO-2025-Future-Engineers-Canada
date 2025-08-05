@@ -1,29 +1,35 @@
 #include "gyro.h"
+#include <math.h>
 
 /* ------------------------------------------------------------ *
  * global variables                                             *
  * ------------------------------------------------------------ */
 int i2cfd; // I2C file descriptor
+struct bnoeul zeroAngle = {0.0, 0.0, 0.0};
+double zeroHeading;
+double zeroPitch;
+double zeroRoll;
 
 /* ------------------------------------------------------------ *
  * BNO_init_i2cbus - Enables the I2C bus communication. Raspberry  *
  * Pi 2 uses i2c-1, RPI 1 used i2c-0, NanoPi also uses i2c-0.   *
  * ------------------------------------------------------------ */
-void BNO_init_i2cbus(char *i2cbus, char *i2caddr) {
+void BNO_init_i2cbus() {
+    char filename[32];
 
-    if ((i2cfd = open(i2cbus, O_RDWR)) < 0) {
-        printf("Error failed to open I2C bus [%s].\n", i2cbus);
+    sprintf(filename, "/dev/i2c-%d", BNO055_BUS);
+    if ((i2cfd = open(filename, O_RDWR)) < 0) {
+        printf("Error failed to open I2C bus [%s].\n", filename);
         exit(-1);
     }
-    if (VERBOSE) printf("Debug: I2C bus device: [%s]\n", i2cbus);
+    if (VERBOSE) printf("Debug: I2C bus device: [%s]\n", filename);
     /* --------------------------------------------------------- *
      * Set I2C device (BNO055 I2C address is  0x28 or 0x29)      *
      * --------------------------------------------------------- */
-    int addr = (int)strtol(i2caddr, NULL, 16);
-    if (VERBOSE) printf("Debug: Sensor address: [0x%02X]\n", addr);
+    if (VERBOSE) printf("Debug: Sensor address: [0x%02X]\n", BNO055_ADDR);
 
-    if (ioctl(i2cfd, I2C_SLAVE, addr) != 0) {
-        printf("Error can't find sensor at address [0x%02X].\n", addr);
+    if (ioctl(i2cfd, I2C_SLAVE, BNO055_ADDR) != 0) {
+        printf("Error can't find sensor at address [0x%02X].\n", BNO055_ADDR);
         exit(-1);
     }
     /* --------------------------------------------------------- *
@@ -31,9 +37,19 @@ void BNO_init_i2cbus(char *i2cbus, char *i2caddr) {
      * --------------------------------------------------------- */
     char reg = BNO055_CHIP_ID_ADDR;
     if (write(i2cfd, &reg, 1) != 1) {
-        printf("Error: I2C write failure register [0x%02X], sensor addr [0x%02X]?\n", reg, addr);
+        printf("Error: I2C write failure register [0x%02X], sensor addr [0x%02X]?\n", reg, BNO055_ADDR);
         exit(-1);
     }
+
+    BNO_set_mode(ndof);
+
+    if (BNO_get_eul(&zeroAngle, 1, 1, 1) == -1) {
+        printf("An error occurred.");
+    }
+
+    zeroHeading = zeroAngle.eul_head;
+    zeroPitch = zeroAngle.eul_pitc;
+    zeroRoll = zeroAngle.eul_roll;
 }
 
 /* --------------------------------------------------------------- *
@@ -91,7 +107,7 @@ int BNO_get_mag(struct bnomag *bnod_ptr) {
  *  get_eul() - read Euler orientation into the global struct   *
  * ------------------------------------------------------------ */
 int BNO_get_eul(struct bnoeul *bnod_ptr, int startDirection, int direction, int stretch) {
-    double neutralOrientation = (abs((stretch - 1) * 90 - (360 * !startDirection)) + (180 * startDirection ^ direction)) % 360;
+    double neutralOrientation = (abs((stretch - 1) * 90 - (360 * (!startDirection))) + (180 * (startDirection ^ direction))) % 360;
 
     char reg = BNO055_EULER_H_LSB_ADDR;
     if (write(i2cfd, &reg, 1) != 1) {
@@ -110,23 +126,35 @@ int BNO_get_eul(struct bnoeul *bnod_ptr, int startDirection, int direction, int 
     int16_t buf = ((int16_t)data[1] << 8) | data[0];
     if (VERBOSE) printf("Debug: Euler Orientation H: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[0], data[1], buf);
     double rawHeading = (double)buf / 16.0;
-    double absoluteHeading = abs(rawHeading - (360 * !startDirection));
+    double zeroedHeading = rawHeading - zeroHeading;
+    if (zeroedHeading < 0) {
+        zeroedHeading += 360;
+    }
+    double absoluteHeading = fabs(zeroedHeading - (360 * (!startDirection)));
     double goodHeading = (absoluteHeading - neutralOrientation) * (direction * 2 - 1);
     bnod_ptr->eul_head = goodHeading;
 
     buf = ((int16_t)data[3] << 8) | data[2];
     if (VERBOSE) printf("Debug: Euler Orientation R: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[2], data[3], buf);
     double rawRoll = (double)buf / 16.0;
-    double absoluteRoll = abs(rawRoll - (360 * !startDirection));
+    double zeroedRoll = rawRoll - zeroRoll;
+    if (zeroedRoll < 0) {
+        zeroedRoll += 360;
+    }
+    double absoluteRoll = fabs(zeroedRoll - (360 * (!startDirection)));
     double goodRoll = (absoluteRoll - neutralOrientation) * (direction * 2 - 1);
-    bnod_ptr->eul_roll = absoluteRoll;
+    bnod_ptr->eul_roll = goodRoll;
 
     buf = ((int16_t)data[5] << 8) | data[4];
     if (VERBOSE) printf("Debug: Euler Orientation P: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[4], data[5], buf);
     double rawPitch = (double)buf / 16.0;
-    double absolutePitch = abs(rawPitch - (360 * !startDirection));
+    double zeroedPitch = rawPitch - zeroPitch;
+    if (zeroedPitch < 0) {
+        zeroedPitch += 360;
+    }
+    double absolutePitch = fabs(zeroedPitch - (360 * (!startDirection)));
     double goodPitch = (absolutePitch - neutralOrientation) * (direction * 2 - 1);
-    bnod_ptr->eul_pitc = absolutePitch;
+    bnod_ptr->eul_pitc = goodPitch;
     return (0);
 }
 
@@ -138,7 +166,7 @@ int BNO_get_eul(struct bnoeul *bnod_ptr, int startDirection, int direction, int 
 int BNO_set_mode(opmode_t newmode) {
     char data[2] = {0};
     data[0] = BNO055_OPR_MODE_ADDR;
-    opmode_t oldmode = get_mode();
+    opmode_t oldmode = BNO_get_mode();
 
     if (oldmode == newmode)
         return (0);                        // if new mode is the same
@@ -166,7 +194,7 @@ int BNO_set_mode(opmode_t newmode) {
      * --------------------------------------------------------- */
     usleep(25 * 1000);
 
-    if (get_mode() == newmode)
+    if (BNO_get_mode() == newmode)
         return (0);
     else
         return (-1);
@@ -183,7 +211,7 @@ int BNO_set_power(power_t pwrmode) {
     /* ------------------------------------------------------------ *
      * Check what operational mode we are in                        *
      * ------------------------------------------------------------ */
-    opmode_t oldmode = get_mode();
+    opmode_t oldmode = BNO_get_mode();
 
     /* ------------------------------------------------------------ *
      * If ops mode wasn't config, switch to "CONFIG" mode first     *
@@ -225,7 +253,7 @@ int BNO_set_power(power_t pwrmode) {
         usleep(30 * 1000);
     } // now the previous mode is back
 
-    if (get_power() == pwrmode)
+    if (BNO_get_power() == pwrmode)
         return (0);
     else
         return (-1);
@@ -283,4 +311,49 @@ int BNO_print_sstat(int stat_code) {
         break;
     }
     return (0);
+}
+
+/* ------------------------------------------------------------ *
+ * get_mode() - returns sensor operational mode register 0x3D   *
+ * Reads 1 byte from Operations Mode register 0x3d, and uses    *
+ * only the lowest 4 bit. Bits 4-7 are unused, stripped off     *
+ * ------------------------------------------------------------ */
+unsigned int BNO_get_mode() {
+    int reg = BNO055_OPR_MODE_ADDR;
+    if (write(i2cfd, &reg, 1) != 1) {
+        printf("Error: I2C write failure for register 0x%02X\n", reg);
+        return (-1);
+    }
+
+    unsigned int data = 0;
+    if (read(i2cfd, &data, 1) != 1) {
+        printf("Error: I2C read failure for register data 0x%02X\n", reg);
+        return (-1);
+    }
+
+    if (VERBOSE == 1) printf("Debug: Operation Mode: [0x%02X]\n", data & 0x0F);
+
+    return (data & 0x0F); // only return the lowest 4 bits
+}
+
+/* ------------------------------------------------------------ *
+ * get_power() returns the sensor power mode from register 0x3e *
+ * Only the lowest 2 bit are used, ignore the unused bits 2-7.  *
+ * ------------------------------------------------------------ */
+unsigned int BNO_get_power() {
+    int reg = BNO055_PWR_MODE_ADDR;
+    if (write(i2cfd, &reg, 1) != 1) {
+        printf("Error: I2C write failure for register 0x%02X\n", reg);
+        return (-1);
+    }
+
+    unsigned int data = 0;
+    if (read(i2cfd, &data, 1) != 1) {
+        printf("Error: I2C read failure for register data 0x%02X\n", reg);
+        return (-1);
+    }
+
+    if (VERBOSE == 1) printf("Debug:     Power Mode: [0x%02X] 2bit [0x%02X]\n", data, data & 0x03);
+
+    return (data & 0x03); // only return the lowest 2 bits
 }

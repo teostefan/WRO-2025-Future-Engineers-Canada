@@ -100,11 +100,11 @@ void CV_drawbb(CV_frame frame, CV_bounding_box_list *bboxes, const unsigned char
     }
 }
 
-void CV_chromakey(CV_mask mask, const CV_frame hsv_frame, const unsigned char h[2], const unsigned char s[2], const unsigned char v[2]) {
+void CV_chromakey(CV_mask mask, const CV_frame hsv_frame, const unsigned int h[2], const unsigned int s[2], const unsigned int v[2]) {
     CV_FOREACH(x, y) {
-        unsigned char h_value = hsv_frame[y][x][0];
-        unsigned char s_value = hsv_frame[y][x][1];
-        unsigned char v_value = hsv_frame[y][x][2];
+        unsigned int h_value = hsv_frame[y][x][0];
+        unsigned int s_value = hsv_frame[y][x][1];
+        unsigned int v_value = hsv_frame[y][x][2];
 
         // Check if the pixel is within the specified hue, saturation, and value ranges.
         if (((h_value >= h[0] && h_value <= h[1]) || (h[0] > h[1] && (h_value >= h[0] || h_value <= h[1]))) &&

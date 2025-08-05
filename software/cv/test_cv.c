@@ -19,7 +19,7 @@ int main() {
     while (frame_count++ < 100) {                     // Limit to 100 frames for demonstration
         if (!CV_getHSVframe(frame, camera)) return 0; // Load an HSV frame.
 
-        CV_chromakey(mask, frame, (unsigned char[]){350, 359}, (unsigned char[]){75, 85}, (unsigned char[]){85, 95});
+        CV_chromakey(mask, frame, (unsigned int[]){350, 359}, (unsigned int[]){75, 85}, (unsigned int[]){85, 95});
 
         CV_masktracker(&bboxes, mask, 50);
 
@@ -27,7 +27,7 @@ int main() {
 
         CV_drawbb(frame, &bboxes, (unsigned char[]){255, 0, 0}); // Draw bounding boxes in red.
 
-        CV_chromakey(mask, frame, (unsigned char[]){105, 115}, (unsigned char[]){75, 85}, (unsigned char[]){75, 85});
+        CV_chromakey(mask, frame, (unsigned int[]){105, 115}, (unsigned int[]){75, 85}, (unsigned int[]){75, 85});
 
         CV_masktracker(&bboxes, mask, 50);
 

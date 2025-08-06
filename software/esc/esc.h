@@ -3,7 +3,7 @@
 
 #include <fcntl.h>
 #include <linux/i2c-dev.h>
-#include <pigpio.h>
+#include <pigpio.h> // NOLINT: This header exists on the target system. Ignore any warnings.
 #include <stdio.h>
 #include <sys/ioctl.h>
 #include <time.h>

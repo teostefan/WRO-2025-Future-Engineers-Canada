@@ -13,7 +13,7 @@ all-tests: $(OUT) $(TESTS)
 
 $(OUT): $(SRC) software/kf/kf_matrix.h
 	@echo -ne "\033[1;34m[2] - Compiling: \033[0m"
-	$(CC) $(CFLAGS) -o $(OUT) $(SRC)
+	$(CC) $(CFLAGS) -o $(OUT) $(SRC) -lm -lpigpio -lrt
 	@echo -e "\033[1;32mBuild successful!\033[0m"
 
 builds/test_cv: software/cv/test_cv.c software/cv/cv.c
@@ -23,7 +23,7 @@ builds/test_cv: software/cv/test_cv.c software/cv/cv.c
 
 builds/test_esc: software/esc/test_esc.c software/esc/esc.c
 	@echo -ne "\033[1;34m[3] - Compiling test_esc: \033[0m"
-	$(CC) $(CFLAGS) -o builds/test_esc software/esc/test_esc.c software/esc/esc.c
+	$(CC) $(CFLAGS) -o builds/test_esc software/esc/test_esc.c software/esc/esc.c -lpigpio -lrt
 	@echo -e "\033[1;32mtest_esc build successful!\033[0m"
 
 builds/test_tof: software/tof/test_tof.c software/tof/tof.c

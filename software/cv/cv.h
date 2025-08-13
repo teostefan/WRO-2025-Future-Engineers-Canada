@@ -139,6 +139,10 @@ static inline void CV_RGBtoHSV(const CV_pixel_RGB rgb, CV_pixel_HSV hsv) {
  */
 CV_camerapipe CV_getcamera(const char *camera_name, const char *filters);
 
+unsigned char CV_clamp(int value);
+
+void CV_enhanceframe(CV_frame buffer, float contrast, int brightness);
+
 /**
  * @brief Retrieves a RGB frame from the camera and stores it in the provided buffer.
  *
@@ -205,7 +209,7 @@ void CV_closeplayer(const CV_playerpipe player);
  * @param v An array of two unsigned chars representing the value range (inclusive).
  * @note The hue range is specified in decadegrees (0-36), saturation and value ranges are specified in percentage (0-100). If the first value in the hue range is greater than the second, the interval wraps around (e.g., h[0] = 350, h[1] = 10 means hue from 350 to 10 degrees).
  */
-void CV_chromakey(CV_mask mask, const CV_frame hsv_frame, const unsigned int h[2], const unsigned int s[2], const unsigned int v[2]);
+void CV_chromakey(CV_mask mask, const CV_frame hsv_frame, const unsigned char h[2], const unsigned char s[2], const unsigned char v[2]);
 
 /**
  * @brief Tracks colors in an image using a flood fill algorithm. It identifies contiguous regions of pixels that match specified color criteria and returns their bounding boxes.

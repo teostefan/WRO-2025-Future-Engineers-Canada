@@ -12,12 +12,12 @@
 #define HSV_GREEN {112, 79.4, 83.9}
 
 #define H_HM_RED (unsigned char[]){35, 1}
-#define S_HM_RED (unsigned char[]){40, 80}
-#define V_HM_RED (unsigned char[]){50, 100}
+#define S_HM_RED (unsigned char[]){60, 100}
+#define V_HM_RED (unsigned char[]){20, 100}
 
-#define H_HM_GREEN (unsigned char[]){12, 16}
-#define S_HM_GREEN (unsigned char[]){40, 80}
-#define V_HM_GREEN (unsigned char[]){50, 100}
+#define H_HM_GREEN (unsigned char[]){7, 16}
+#define S_HM_GREEN (unsigned char[]){60, 100}
+#define V_HM_GREEN (unsigned char[]){20, 100}
 
 #define CONTRAST 1.5
-#define BRIGHTNESS -50
+#define BRIGHTNESS -20

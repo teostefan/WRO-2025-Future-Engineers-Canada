@@ -4,9 +4,6 @@
 #include "cv_config.h"
 
 int main() {
-    CV_camerapipe camera = CV_getcamera("/dev/video0", "gblur=0.5");
-    if (!camera) return 0;
-
     CV_playerpipe player = CV_getplayer();
     if (!player) return 0;
 
@@ -19,7 +16,10 @@ int main() {
     CV_bounding_box_list redbboxes = {0};
     CV_bounding_box_list greenbboxes = {0};
 
-    while (frame_count++ < 100) {                          // Limit to 100 frames for demonstration
+    while (frame_count++ < 40) { // Limit to 100 frames for demonstration
+        CV_camerapipe camera = CV_getcamera("/dev/video0", "gblur=0.5");
+        if (!camera) return 0;
+
         if (!CV_getHSVframe(greenframe, camera)) return 0; // Load an HSV frame for detecting green obstacles.
         if (!CV_getHSVframe(redframe, camera)) return 0;   // Load an HSV frame for detecting red obstacles.
 
@@ -31,7 +31,6 @@ int main() {
         CV_drawbb(greenframe, &greenbboxes, (unsigned char[]){0, 255, 0}); // Draw bounding boxes in green.
         CV_playframe(player, greenframe);                                  // Play the frame.
         */
-
         CV_bounding_box *biggestgreenbox = &greenbboxes.boxes[0];
         for (size_t i = 0; i < greenbboxes.count; i++) {
             CV_bounding_box *box = &greenbboxes.boxes[i];
@@ -52,7 +51,6 @@ int main() {
         CV_drawbb(redframe, &redbboxes, (unsigned char[]){255, 0, 0}); // Draw bounding boxes in red.
         CV_playframe(player, redframe);                                // Play the frame.
         */
-
         CV_bounding_box *biggestredbox = &redbboxes.boxes[0];
         for (size_t i = 0; i < redbboxes.count; i++) {
             CV_bounding_box *box = &redbboxes.boxes[i];
@@ -64,9 +62,15 @@ int main() {
             }
         }
         printf("Red box: x=[%d, %d], y=[%d, %d]\n", biggestredbox->x[0], biggestredbox->x[1], biggestredbox->y[0], biggestredbox->y[1]);
-    }
 
-    CV_closecamera(camera);
+        if ((biggestredbox->y[0] + (biggestredbox->y[1] - biggestredbox->y[0]) / 2) < (biggestgreenbox->y[0] + (biggestgreenbox->y[1] - biggestgreenbox->y[0]) / 2)) {
+            printf("\nred box detected\n\n");
+        } else {
+            printf("\ngreen box detected\n\n");
+        }
+
+        CV_closecamera(camera);
+    }
 
     CV_closeplayer(player);
 

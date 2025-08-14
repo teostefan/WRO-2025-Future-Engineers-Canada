@@ -139,6 +139,10 @@ static inline void CV_RGBtoHSV(const CV_pixel_RGB rgb, CV_pixel_HSV hsv) {
  */
 CV_camerapipe CV_getcamera(const char *camera_name, const char *filters);
 
+unsigned char CV_clamp(int value);
+
+void CV_enhanceframe(CV_frame buffer, float contrast, int brightness);
+
 /**
  * @brief Retrieves a RGB frame from the camera and stores it in the provided buffer.
  *

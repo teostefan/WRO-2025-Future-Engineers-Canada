@@ -40,8 +40,7 @@ int main() {
     printf("Model ID - %d\n", model);
     printf("Revision ID - %d\n", revision);
 
-    for (i = 0; i < 100; i++) // read values 20 times a second for 1 minute
-    {
+    for (i = 0; i < 100; i++) { // read values 20 times a second for 1 minute
         iDistance = tofReadDistance();
         // if (iDistance < 4096) // valid range?
         printf("Distance = %dmm\n", iDistance);

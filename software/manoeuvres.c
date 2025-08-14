@@ -12,13 +12,13 @@ int pullOut() {
     IO_writeToDriveMotor(CONTROL_SPEED);
     IO_writeToSteeringMotor(PO_SLALOM_STEERING, startDirection);
     do {
-        orientation = IO_readGyroscope(startDirection, stretch);
+        orientation = IO_readGyroscope(startDirection, startDirection, stretch);
     } while (orientation < PULL_OUT_ANGLE);
 
     // Turn until straight
     IO_writeToSteeringMotor(PO_SLALOM_STEERING, !startDirection);
     do {
-        orientation = IO_readGyroscope(startDirection, stretch);
+        orientation = IO_readGyroscope(startDirection, startDirection, stretch);
     } while (orientation > 0);
 
     IO_writeToSteeringMotor(STRAIGHT_STEERING, startDirection);
@@ -46,13 +46,13 @@ int parallelPark() {
         // Turn until halfway to the desired line
         IO_writeToSteeringMotor(PP_SLALOM_STEERING, !startDirection);
         do {
-            orientation = IO_readGyroscope(startDirection, stretch);
+            orientation = IO_readGyroscope(startDirection, startDirection, stretch);
         } while (orientation < SMALL_SLALOM_ANGLE);
 
         // Turn until straight
         IO_writeToSteeringMotor(PP_SLALOM_STEERING, startDirection);
         do {
-            orientation = IO_readGyroscope(startDirection, stretch);
+            orientation = IO_readGyroscope(startDirection, startDirection, stretch);
         } while (orientation > 0);
 
         IO_writeToSteeringMotor(STRAIGHT_STEERING, startDirection);
@@ -104,7 +104,8 @@ int parallelPark() {
             direction = FORWARDS;
             break;
         }
-        orientation = IO_readGyroscope(startDirection, stretch);
+        orientation = IO_readGyroscope(startDirection, startDirection, stretch);
+        orientation = IO_readGyroscope(startDirection, startDirection, stretch);
     } while (orientation < PP_ANGLE);
 
     // turn until parallel, if wall too close, stop, change direction and turn wheel other way
@@ -114,7 +115,7 @@ int parallelPark() {
         if (rearDistance < PP_WIGGLE_REVERSE_DISTANCE) {
             direction = !direction;
         }
-        orientation = IO_readGyroscope(startDirection, stretch);
+        orientation = IO_readGyroscope(startDirection, startDirection, stretch);
     } while (orientation < PP_ACCEPTABLE_MARGIN_ANGLE && orientation > (0 - PP_ACCEPTABLE_MARGIN_ANGLE));
 
     IO_writeToDriveMotor(STOP);
@@ -133,7 +134,7 @@ int turnAround(int direction) {
 
     // Turn until turned around
     do {
-        orientation = IO_readGyroscope(startDirection, stretch);
+        orientation = IO_readGyroscope(startDirection, direction, stretch);
     } while (orientation < 180);
 
     IO_writeToSteeringMotor(STRAIGHT_STEERING, direction);
@@ -203,13 +204,13 @@ int driveStretch(int direction) {
         // Turn until necessary angle for avoiding the obstacle
         IO_writeToSteeringMotor(SLALOM_STEERING, secondObstacle);
         do {
-            orientation = IO_readGyroscope(startDirection, stretch);
+            orientation = IO_readGyroscope(startDirection, direction, stretch);
         } while (orientation < slalomAngle);
 
         // Turn until straight
         IO_writeToSteeringMotor(SLALOM_STEERING, firstObstacle);
         do {
-            orientation = IO_readGyroscope(startDirection, stretch);
+            orientation = IO_readGyroscope(startDirection, direction, stretch);
         } while (orientation > 0);
 
         // Using PID controller to stay on the correct trajectory, advance until straight completed
@@ -296,14 +297,14 @@ int driveTurn(int direction) {
 
     // Turn until first angle is reached, either directly through the turn or turning wide before coming back in
     do {
-        orientation = IO_readGyroscope(startDirection, stretch);
+        orientation = IO_readGyroscope(startDirection, direction, stretch);
     } while (orientation < stopAngle);
 
     IO_writeToSteeringMotor(angle2, direction);
 
     // If turn not yet completed, complete turn
     while (orientation < 90) {
-        orientation = IO_readGyroscope(startDirection, stretch);
+        orientation = IO_readGyroscope(startDirection, direction, stretch);
     }
 
     IO_writeToSteeringMotor(STRAIGHT_STEERING, direction);
@@ -351,7 +352,7 @@ int driveOpenTurn(int direction) {
 
     // Turn until turn completed
     do {
-        orientation = IO_readGyroscope(startDirection, stretch);
+        orientation = IO_readGyroscope(startDirection, direction, stretch);
     } while (orientation < 90);
 
     IO_writeToSteeringMotor(STRAIGHT_STEERING, direction);

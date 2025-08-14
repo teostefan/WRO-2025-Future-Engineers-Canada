@@ -2,12 +2,16 @@
 #define GLOBALS_H
 
 #include <math.h>
+#include <stdio.h>
 #include <time.h>
 
 #include "cv/cv.h"
 #include "cv/cv_config.h"
+#include "esc/esc.h"
 #include "gyro/gyro.h"
+#include "i2cmux/i2cmux.h"
 #include "pid/pid.h"
+#include "tof/tof.h"
 
 #define NOOP
 #define millis() (unsigned long)time(NULL)

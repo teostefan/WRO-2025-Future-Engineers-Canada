@@ -79,8 +79,7 @@ typedef struct {
  */
 struct CV_CameraData {
     int obstacle_spotted;
-    int obstacle_x_1;
-    int obstacle_x_2;
+    int obstacle_x;
     int obstacle_y;
     int obstacle_colour;
 };

@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -O2 -Isoftware
-SRC = software/main.c software/cv/cv.c software/kf/kf.c software/kf/kf_matrix.c software/pid/pid.c software/i2cmux/i2cmux.c software/gyro/gyro.c software/esc/esc.c
+SRC = software/main.c software/cv/cv.c software/kf/kf.c software/kf/kf_matrix.c software/pid/pid.c software/i2cmux/i2cmux.c software/gyro/gyro.c software/esc/esc.c software/tof/tof.c
 OUT = builds/main
 TESTS = builds/test_cv builds/test_tof builds/test_i2cmux builds/test_gyro builds/test_esc builds/test_kf
 

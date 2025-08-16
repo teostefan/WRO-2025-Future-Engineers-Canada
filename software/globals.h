@@ -119,6 +119,6 @@ int startDirection;
 int map[4][2];
 int stretch;
 struct PID_Controller pid = {KP, KI, KD, 0.0f, 0.0f};
-struct CV_CameraData cv_data = {0, 0, 0, 0, 0};
+struct CV_CameraData cv_data = {0, 0, 0, 0};
 
 #endif // GLOBALS_H

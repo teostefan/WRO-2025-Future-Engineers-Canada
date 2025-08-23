@@ -13,11 +13,11 @@ while true; do
         if (( $(echo "$current_time - $last_press_time > $debounce_time" | bc -l) )); then
             if [ "$is_running" = false ]; then
                 echo "Button press detected; starting main program."
-                /home/wro/Documents/WRO-2025-Future-Engineers-Canada/builds/main &
+                /home/wro/Documents/WRO-2025-Future-Engineers-Canada/builds/test_esc &
                 is_running=true
             else
                 echo "Button press detected; stopping main program."
-                pkill -f "/home/wro/Documents/WRO-2025-Future-Engineers-Canada/builds/main"
+                pkill -f "/home/wro/Documents/WRO-2025-Future-Engineers-Canada/builds/test_esc"
                 is_running=false
             fi
             last_press_time=$current_time

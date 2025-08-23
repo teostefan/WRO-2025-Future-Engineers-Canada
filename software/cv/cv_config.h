@@ -16,7 +16,7 @@
 #define V_HM_RED (unsigned char[]){20, 100}
 
 #define H_HM_GREEN (unsigned char[]){7, 16}
-#define S_HM_GREEN (unsigned char[]){60, 100}
+#define S_HM_GREEN (unsigned char[]){20, 100}
 #define V_HM_GREEN (unsigned char[]){20, 100}
 
 #define CONTRAST 1.5

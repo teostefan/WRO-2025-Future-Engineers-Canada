@@ -62,9 +62,10 @@ int parallelPark() {
 
     // Using PID controller to stay on the correct trajectory, advance past the parking lot while ignoring obstacles
     do {
-        frontDistance = IO_readTOF(VERTICAL, FRONT);
-        rearDistance = IO_readTOF(VERTICAL, REAR);
-        sideDistance = IO_readTOF(HORIZONTAL, !startDirection);
+        orientation = IO_readGyroscope(startDirection, startDirection, stretch);
+        frontDistance = IO_readTOF(VERTICAL, FRONT) * cos(orientation);
+        rearDistance = IO_readTOF(VERTICAL, REAR) * cos(orientation);
+        sideDistance = IO_readTOF(HORIZONTAL, !startDirection) * cos(orientation);
         if (sideDistance != 0) {
             error = sideDistance - STARTING_SECTION_AVOID_DISTANCE;
         } else {
@@ -80,8 +81,9 @@ int parallelPark() {
 
     // Using PID controller to stay on the correct trajectory, reverse until parking lines detected, or parallel park distance reached
     do {
-        frontDistance = IO_readTOF(VERTICAL, FRONT);
-        rearDistance = IO_readTOF(VERTICAL, REAR);
+        orientation = IO_readGyroscope(startDirection, startDirection, stretch);
+        frontDistance = IO_readTOF(VERTICAL, FRONT) * cos(orientation);
+        rearDistance = IO_readTOF(VERTICAL, REAR) * cos(orientation);
         if (sideDistance != 0) {
             error = sideDistance - STARTING_SECTION_AVOID_DISTANCE;
         } else {
@@ -91,7 +93,7 @@ int parallelPark() {
         dt = (thisTime - lastTime) / 1000.0f;
         correction = PID_calculatePID(&pid, error, dt);
         IO_writeToSteeringMotor(fabsf(correction), correction > 0);
-        sideDistance = IO_readTOF(HORIZONTAL, !startDirection);
+        sideDistance = IO_readTOF(HORIZONTAL, !startDirection) * cos(orientation);
     } while ((frontDistance > PP_FRONT_REVERSE_DISTANCE || rearDistance < PP_REAR_REVERSE_DISTANCE) && sideDistance > PP_PARKING_LOT_DISTANCE);
 
     IO_writeToSteeringMotor(PP_STEERING, startDirection);
@@ -99,7 +101,8 @@ int parallelPark() {
 
     // turn until parallel park angle
     do {
-        rearDistance = IO_readTOF(VERTICAL, REAR);
+        orientation = IO_readGyroscope(startDirection, startDirection, stretch);
+        rearDistance = IO_readTOF(VERTICAL, REAR) * cos(orientation);
         if (rearDistance < PP_WIGGLE_REVERSE_DISTANCE) {
             direction = FORWARDS;
             break;
@@ -110,12 +113,13 @@ int parallelPark() {
 
     // turn until parallel, if wall too close, stop, change direction and turn wheel other way
     do {
+        orientation = IO_readGyroscope(startDirection, startDirection, stretch);
+        rearDistance = IO_readTOF(VERTICAL, REAR) * cos(orientation);
         IO_writeToSteeringMotor(PP_STEERING, startDirection ^ direction);
         IO_writeToDriveMotor(PP_REVERSE_SPEED * (direction * 2) - 1);
         if (rearDistance < PP_WIGGLE_REVERSE_DISTANCE) {
             direction = !direction;
         }
-        orientation = IO_readGyroscope(startDirection, startDirection, stretch);
     } while (orientation < PP_ACCEPTABLE_MARGIN_ANGLE && orientation > (0 - PP_ACCEPTABLE_MARGIN_ANGLE));
 
     IO_writeToDriveMotor(STOP);
@@ -130,7 +134,7 @@ int turnAround(int direction) {
     int startingSide = map[stretch][relativeLapDirection];
 
     IO_writeToSteeringMotor(U_TURN_ANGLE, !startingSide);
-    IO_writeToDriveMotor(U_TURN_ANGLE);
+    IO_writeToDriveMotor(U_TURN_SPEED);
 
     // Turn until turned around
     do {
@@ -165,8 +169,9 @@ int driveStretch(int direction) {
         IO_writeToSteeringMotor(STRAIGHT_STEERING, firstObstacle);
         IO_writeToDriveMotor(MAX_SPEED);
         do {
-            frontDistance = IO_readTOF(VERTICAL, FRONT);
-            sideDistance = IO_readTOF(HORIZONTAL, firstObstacle);
+            orientation = IO_readGyroscope(startDirection, direction, stretch);
+            frontDistance = IO_readTOF(VERTICAL, direction) * cos(orientation);
+            sideDistance = IO_readTOF(HORIZONTAL, firstObstacle) * cos(orientation);
             if (sideDistance != 0) {
                 error = sideDistance - AVOID_DISTANCE;
             } else {
@@ -188,8 +193,9 @@ int driveStretch(int direction) {
         // Using PID controller to stay on the correct trajectory, stick to one side until time to switch
         IO_writeToDriveMotor(CONTROL_SPEED);
         do {
-            rearDistance = IO_readTOF(VERTICAL, REAR);
-            sideDistance = IO_readTOF(HORIZONTAL, firstObstacle);
+            orientation = IO_readGyroscope(startDirection, direction, stretch);
+            rearDistance = IO_readTOF(VERTICAL, !direction) * cos(orientation);
+            sideDistance = IO_readTOF(HORIZONTAL, firstObstacle) * cos(orientation);
             if (sideDistance != 0) {
                 error = sideDistance - AVOID_DISTANCE;
             } else {
@@ -219,8 +225,9 @@ int driveStretch(int direction) {
         IO_writeToSteeringMotor(STRAIGHT_STEERING, secondObstacle);
         IO_writeToDriveMotor(MAX_SPEED);
         do {
-            frontDistance = IO_readTOF(VERTICAL, FRONT);
-            sideDistance = IO_readTOF(HORIZONTAL, secondObstacle);
+            orientation = IO_readGyroscope(startDirection, direction, stretch);
+            frontDistance = IO_readTOF(VERTICAL, direction) * cos(orientation);
+            sideDistance = IO_readTOF(HORIZONTAL, secondObstacle) * cos(orientation);
             if (sideDistance != 0) {
                 error = sideDistance - AVOID_DISTANCE;
             } else {
@@ -315,7 +322,9 @@ int driveTurn(int direction) {
 int driveOpenStretch(int direction) {
     // Complete straight section during the open challenge, going forwards on laps 1 and 3, and backwards on lap 2
     float frontDistance;
-    float sideDistance;
+    float leftDistance;
+    float rightDistance;
+    float orientation;
     float dt;
     float error;
     float correction;
@@ -327,10 +336,12 @@ int driveOpenStretch(int direction) {
     IO_writeToDriveMotor(MAX_SPEED * (((direction == startDirection) * 2) - 1));
     IO_writeToSteeringMotor(STRAIGHT_STEERING, direction);
     do {
-        frontDistance = IO_readTOF(VERTICAL, FRONT);
-        sideDistance = IO_readTOF(HORIZONTAL, startDirection == RIGHT);
-        if (sideDistance != 0) {
-            error = sideDistance - OPEN_DISTANCE;
+        orientation = IO_readGyroscope(startDirection, direction, stretch);
+        frontDistance = IO_readTOF(VERTICAL, direction) * cos(orientation);
+        leftDistance = IO_readTOF(HORIZONTAL, !direction) * cos(orientation);
+        rightDistance = IO_readTOF(HORIZONTAL, direction) * cos(orientation);
+        if ((rightDistance - leftDistance) != 0) {
+            error = rightDistance - leftDistance;
         } else {
             error = pid.prev_error;
         }
@@ -361,7 +372,51 @@ int driveOpenTurn(int direction) {
 }
 
 int driveFirstLapStretch(int direction) {
-    // unfinished
+    float leftDistance;
+    float rightDistance;
+    float frontDistance;
+    float rearDistance;
+    float orientation;
+    struct CV_CameraData nearestObstacle;
+    int relative_x;
+    float correction;
+
+    IO_writeToDriveMotor(FIRST_LAP_STRETCH_SPEED * (((direction == startDirection) * 2) - 1));
+
+    do {
+        orientation = IO_readGyroscope(startDirection, direction, stretch);
+        leftDistance = IO_readTOF(HORIZONTAL, !direction) * cos(orientation);
+        rightDistance = IO_readTOF(HORIZONTAL, direction) * cos(orientation);
+        frontDistance = IO_readTOF(HORIZONTAL, direction) * cos(orientation);
+        rearDistance = IO_readTOF(HORIZONTAL, !direction) * cos(orientation);
+        nearestObstacle = IO_readCamera();
+
+        if (nearestObstacle.obstacle_spotted) {
+            if (map[stretch][0] == -1) {
+                map[stretch][0] = nearestObstacle.obstacle_colour;
+            } else if (map[stretch][1] == -1) {
+                map[stretch][1] = nearestObstacle.obstacle_colour;
+            }
+            relative_x = (int)sqrt(pow(((CV_FRAME_WIDTH / 2) - nearestObstacle.obstacle_x), 2) + pow(nearestObstacle.obstacle_y, 2));
+            if (relative_x(< CV_FRAME_WIDTH / 4)) {
+                correction = (((CV_FRAME_WIDTH / 2) > nearestObstacle.obstacle_x) * 2 - 1) * FIRST_AVOIDED_P * ((CV_FRAME_WIDTH / 2) - relative_x);
+            }
+            if ((leftDistance < AVOID_DISTANCE) && (nearestObstacle.obstacle_colour == GREEN)) {
+                correction -= FIRST_WALL_P * (AVOID_DISTANCE - leftDistance);
+            } else if ((rightDistance < AVOID_DISTANCE) && (nearestObstacle.obstacle_colour == RED)) {
+                correction += FIRST_WALL_P * (AVOID_DISTANCE - rightDistance);
+            }
+            IO_writeToSteeringMotor(correction, direction);
+        } else {
+            IO_writeToSteeringMotor((FIRST_CENTRED_P * (rightDistance - leftDistance)), direction);
+        }
+    } while ((rearDistance < (STRETCH_LENGTH - TURN_DISTANCE - LENGTH)) || (frontDistance > TURN_DISTANCE));
+
+    if (map[stretch][1] == -1) {
+        map[stretch][1] = map[stretch][0];
+    }
+
+    printf("\nfirst obstacle=%u\nsecond obstacle=%u\n", map[stretch][0], map[stretch][1]);
 
     return 0;
 }

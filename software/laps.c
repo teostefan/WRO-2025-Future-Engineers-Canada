@@ -6,7 +6,7 @@
 
 int driveFirstLap(int direction) {
     // Drive through LAP_TURN_NUMBER turn and straight sections
-    for (int i = 0; i += 1, i < LAP_TURN_NUMBER;) {
+    for (int i = 0; i < LAP_TURN_NUMBER; i++) {
         if (direction == startDirection) {
             // Laps 1 and 3 begin with a straight section and end with a turn section
             stretch = i;
@@ -27,7 +27,7 @@ int driveFirstLap(int direction) {
 
 int driveNonFirstLap(int direction) {
     // Drive through LAP_TURN_NUMBER turn and straight sections
-    for (int i = 0; i += 1, i < LAP_TURN_NUMBER;) {
+    for (int i = 0; i < LAP_TURN_NUMBER; i++) {
         if (direction == startDirection) {
             // Laps 1 and 3 begin with a straight section and end with a turn section
             stretch = i;
@@ -48,7 +48,7 @@ int driveNonFirstLap(int direction) {
 
 int driveOpenLap(int direction) {
     // Drive through LAP_TURN_NUMBER turn and straight sections
-    for (int i = 0; i += 1, i < LAP_TURN_NUMBER;) {
+    for (int i = 0; i < LAP_TURN_NUMBER; i++) {
         if (direction == startDirection) {
             // Laps 1 and 3 begin with a straight section and end with a turn section
             stretch = i;

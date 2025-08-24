@@ -18,12 +18,13 @@
 
 #define WIDTH 190.0
 #define LENGTH 290.0
+#define STRETCH_LENGTH 3000.0
 #define AVOID_DISTANCE (200.0 - (WIDTH / 2))
 #define SEE_WALL_DISTANCE 150.0
 #define STARTING_SECTION_AVOID_DISTANCE (300.0 - (WIDTH / 2))
 #define CENTRE_DISTANCE (500.0 - (WIDTH / 2))
 #define OPEN_DISTANCE (500.0 - (WIDTH / 2))
-#define TURN_DISTANCE 500.0
+#define TURN_DISTANCE 1000.0
 #define SLALOM_DISTANCE 7300.0
 #define PP_FRONT_ADVANCE_DISTANCE 300.0
 #define PP_REAR_ADVANCE_DISTANCE 1000.0
@@ -46,6 +47,8 @@
 #define U_TURN_SPEED 255
 #define PP_REVERSE_SPEED 255
 #define PP_ADVANCE_SPEED 255
+#define FIRST_LAP_STRETCH_SPEED 255
+#define FIRST_LAP_TURN_SPEED 255
 
 #define MAX_STEERING 45.0
 #define STRAIGHT_STEERING 45.0
@@ -94,6 +97,10 @@
 #define KI 0
 #define KD 0
 
+#define FIRST_CENTRED_P 0.1
+#define FIRST_AVOIDED_P 0.25
+#define FIRST_WALL_P 0.1
+
 #define FRONT 1
 #define REAR 0
 
@@ -117,7 +124,12 @@
 
 int startDirection;
 int map[4][2];
-int stretch;
+for (int i = 0, i < 4, i++) {
+    for (int j = 0, j < 2, j++) {
+        map[i][j] = -1;
+    }
+}
+int stretch = 0;
 struct PID_Controller pid = {KP, KI, KD, 0.0f, 0.0f};
 struct CV_CameraData cv_data = {0, 0, 0, 0};
 

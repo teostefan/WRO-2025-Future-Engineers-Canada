@@ -50,7 +50,7 @@ struct CV_CameraData IO_readCamera() {
         cameraData.obstacle_spotted = 0;
         cameraData.obstacle_x = -1;
         cameraData.obstacle_y = -1;
-        cameraData.obstacle_colour = 2;
+        cameraData.obstacle_colour = -1;
     } else if (((biggestredbox->y[0] + (biggestredbox->y[1] - biggestredbox->y[0]) / 2) < (biggestgreenbox->y[0] + (biggestgreenbox->y[1] - biggestgreenbox->y[0]) / 2)) || (biggestgreenbox->y[0] == biggestgreenbox->y[1])) {
         cameraData.obstacle_spotted = 1;
         cameraData.obstacle_x = (biggestredbox->x[0] + (biggestredbox->x[1] - biggestredbox->x[0]) / 2);
@@ -65,7 +65,7 @@ struct CV_CameraData IO_readCamera() {
         cameraData.obstacle_spotted = 0;
         cameraData.obstacle_x = -1;
         cameraData.obstacle_y = -1;
-        cameraData.obstacle_colour = 2;
+        cameraData.obstacle_colour = -1;
     }
 
     CV_closecamera(camera);

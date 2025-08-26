@@ -3,6 +3,12 @@
 #include "io.c"
 
 int main() {
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 2; j++) {
+            map[i][j] = -1;
+        }
+    }
+
     // set startDirection to CLOCKWISE if left TOF sees edge of track, COUNTERCLOCKWISE if right TOF sees it instead
     float leftDistance;
     float rightDistance;

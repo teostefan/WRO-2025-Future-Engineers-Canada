@@ -124,11 +124,6 @@
 
 int startDirection;
 int map[4][2];
-for (int i = 0, i < 4, i++) {
-    for (int j = 0, j < 2, j++) {
-        map[i][j] = -1;
-    }
-}
 int stretch = 0;
 struct PID_Controller pid = {KP, KI, KD, 0.0f, 0.0f};
 struct CV_CameraData cv_data = {0, 0, 0, 0};

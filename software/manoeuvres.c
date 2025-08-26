@@ -379,11 +379,11 @@ int driveFirstLapStretch(int direction) {
     float orientation;
     struct CV_CameraData nearestObstacle;
     int relative_x;
-    float correction;
 
     IO_writeToDriveMotor(FIRST_LAP_STRETCH_SPEED * (((direction == startDirection) * 2) - 1));
 
     do {
+        float correction = 0;
         orientation = IO_readGyroscope(startDirection, direction, stretch);
         leftDistance = IO_readTOF(HORIZONTAL, !direction) * cos(orientation);
         rightDistance = IO_readTOF(HORIZONTAL, direction) * cos(orientation);
@@ -398,7 +398,7 @@ int driveFirstLapStretch(int direction) {
                 map[stretch][1] = nearestObstacle.obstacle_colour;
             }
             relative_x = (int)sqrt(pow(((CV_FRAME_WIDTH / 2) - nearestObstacle.obstacle_x), 2) + pow(nearestObstacle.obstacle_y, 2));
-            if (relative_x(< CV_FRAME_WIDTH / 4)) {
+            if (relative_x < (CV_FRAME_WIDTH / 4)) {
                 correction = (((CV_FRAME_WIDTH / 2) > nearestObstacle.obstacle_x) * 2 - 1) * FIRST_AVOIDED_P * ((CV_FRAME_WIDTH / 2) - relative_x);
             }
             if ((leftDistance < AVOID_DISTANCE) && (nearestObstacle.obstacle_colour == GREEN)) {

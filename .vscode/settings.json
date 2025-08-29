@@ -23,7 +23,8 @@
     "ioctl.h": "c",
     "stdlib.h": "c",
     "pigpio.h": "c",
-    "esc.h": "c"
+    "esc.h": "c",
+    "globals.h": "c"
   },
   "C_Cpp.clang_format_style": "{ BasedOnStyle: LLVM, BreakBeforeBraces: Attach, AllowShortIfStatementsOnASingleLine: true, IndentWidth: 4, UseTab: Never, ColumnLimit: 0 }",
   "editor.formatOnSave": true

@@ -7,6 +7,9 @@ int main() {
     CV_playerpipe player = CV_getplayer();
     if (!player) return 0;
 
+    CV_camerapipe camera = CV_getcamera("/dev/video0", "gblur=0.5");
+    if (!camera) return 0;
+
     CV_frame redframe;
     CV_frame greenframe;
     int frame_count = 0;
@@ -17,9 +20,6 @@ int main() {
 
         CV_bounding_box_list redbboxes = {0};
         CV_bounding_box_list greenbboxes = {0};
-
-        CV_camerapipe camera = CV_getcamera("/dev/video0", "gblur=0.5");
-        if (!camera) return 0;
 
         if (!CV_getHSVframe(greenframe, camera)) return 0; // Load an HSV frame for detecting green obstacles.
         if (!CV_getHSVframe(redframe, camera)) return 0;   // Load an HSV frame for detecting red obstacles.
@@ -69,9 +69,9 @@ int main() {
         } else {
             printf("\ngreen box detected\n\n");
         }
-
-        CV_closecamera(camera);
     }
+
+    CV_closecamera(camera);
 
     CV_closeplayer(player);
 

@@ -12,9 +12,6 @@ struct CV_CameraData IO_readCamera() {
     CV_bounding_box_list redbboxes = {0};
     CV_bounding_box_list greenbboxes = {0};
 
-    CV_camerapipe camera = CV_getcamera("/dev/video0", "gblur=0.5");
-    if (!camera) cameraData.obstacle_spotted = 0;
-
     if (!CV_getHSVframe(greenframe, camera)) cameraData.obstacle_spotted = 0; // Load an HSV frame for detecting green obstacles.
     if (!CV_getHSVframe(redframe, camera)) cameraData.obstacle_spotted = 0;   // Load an HSV frame for detecting red obstacles.
 

@@ -11,6 +11,9 @@ int main() {
 
     IO_initializeTOFs();
 
+    camera = CV_getcamera("/dev/video0", "gblur=0.5");
+    if (!camera) cameraData.obstacle_spotted = 0;
+
     // set startDirection to CLOCKWISE if left TOF sees edge of track, COUNTERCLOCKWISE if right TOF sees it instead
     float leftDistance;
     float rightDistance;

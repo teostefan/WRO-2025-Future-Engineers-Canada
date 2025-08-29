@@ -5,11 +5,13 @@ CV_camerapipe CV_getcamera(const char *camera_name, const char *filters) {
     char cmd[512];
     if (filters && filters[0]) { // Use filters if provided.
         snprintf(cmd, sizeof(cmd),
-                 "ffmpeg -f v4l2 -video_size %dx%d -i %s -vf \"%s\" -f rawvideo -pix_fmt rgb24 - 2>/dev/null", // Redirect stderr to /dev/null. This hides the error messages when closing the pipe.
+                 "ffmpeg -f v4l2 -framerate 30 -video_size %dx%d -i %s "
+                 "-vf \"%s\" -f rawvideo -pix_fmt rgb24 -fflags nobuffer -flags low_delay -an - 2>/dev/null",
                  CV_FRAME_WIDTH, CV_FRAME_HEIGHT, camera_name, filters);
     } else {
         snprintf(cmd, sizeof(cmd),
-                 "ffmpeg -f v4l2 -video_size %dx%d -i %s -f rawvideo -pix_fmt rgb24 - 2>/dev/null", // Redirect stderr to /dev/null. This hides the error messages when closing the pipe.
+                 "ffmpeg -f v4l2 -framerate 30 -video_size %dx%d -i %s "
+                 "-f rawvideo -pix_fmt rgb24 -fflags nobuffer -flags low_delay -an - 2>/dev/null",
                  CV_FRAME_WIDTH, CV_FRAME_HEIGHT, camera_name);
     }
 
@@ -98,9 +100,18 @@ void CV_enhanceframe(CV_frame buffer, float contrast, int brightness) {
 }
 
 int CV_getRGBframe(CV_frame buffer, const CV_camerapipe camera) {
-    size_t n = fread(buffer, 1, CV_FRAME_HEIGHT * CV_FRAME_WIDTH * 3, camera);
-    if (n != CV_FRAME_HEIGHT * CV_FRAME_WIDTH * 3) {
-        fprintf(stderr, "CV Error - Failed to read frame: got %zu bytes, expected %d.\n", n, CV_FRAME_HEIGHT * CV_FRAME_WIDTH * 3);
+    size_t frame_size = CV_FRAME_HEIGHT * CV_FRAME_WIDTH * 3;
+    unsigned char temp[frame_size];
+    size_t n = 0, got = 0;
+
+    // Drain all available frames, keep the last full one
+    while ((n = fread(temp, 1, frame_size, camera)) == frame_size) {
+        memcpy(buffer, temp, frame_size);
+        got = 1;
+    }
+
+    if (!got) {
+        fprintf(stderr, "CV Error - Failed to read frame (no full frame available).\n");
         return 0;
     }
 

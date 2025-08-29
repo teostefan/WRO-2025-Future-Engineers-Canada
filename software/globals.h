@@ -128,5 +128,6 @@ int map[4][2];
 int stretch = 0;
 struct PID_Controller pid = {KP, KI, KD, 0.0f, 0.0f};
 struct CV_CameraData cv_data = {0, 0, 0, 0};
+CV_camerapipe camera;
 
 #endif // GLOBALS_H

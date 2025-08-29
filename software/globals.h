@@ -19,6 +19,7 @@
 #define WIDTH 190.0
 #define LENGTH 290.0
 #define STRETCH_LENGTH 3000.0
+#define DO_NOT_CRASH_DISTANCE 75
 #define AVOID_DISTANCE (200.0 - (WIDTH / 2))
 #define SEE_WALL_DISTANCE 150.0
 #define STARTING_SECTION_AVOID_DISTANCE (300.0 - (WIDTH / 2))
@@ -98,7 +99,7 @@
 #define KD 0
 
 #define FIRST_CENTRED_P 0.1
-#define FIRST_AVOIDED_P 0.25
+#define FIRST_AVOIDED_P 0.1
 #define FIRST_WALL_P 0.1
 
 #define FRONT 1

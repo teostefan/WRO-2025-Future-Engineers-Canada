@@ -4,6 +4,8 @@ is_running=false
 debounce_time=0.5 # Seconds
 last_press_time=0
 
+echo "Script ran at $(date)" >> /home/admin/autostart.log
+
 while true; do
     value=$(raspi-gpio get 17 | grep -o 'level=.' | cut -d= -f2)
     current_time=$(date +%s)
@@ -13,11 +15,11 @@ while true; do
         if (( $(echo "$current_time - $last_press_time > $debounce_time" | bc -l) )); then
             if [ "$is_running" = false ]; then
                 echo "Button press detected; starting main program."
-                /home/wro/Documents/WRO-2025-Future-Engineers-Canada/builds/test_esc &
+                sudo /home/admin/Documents/WRO-2025-Future-Engineers-Canada/builds/main &
                 is_running=true
             else
                 echo "Button press detected; stopping main program."
-                pkill -f "/home/wro/Documents/WRO-2025-Future-Engineers-Canada/builds/test_esc"
+                sudo pkill -f "/home/admin/Documents/WRO-2025-Future-Engineers-Canada/builds/main"
                 is_running=false
             fi
             last_press_time=$current_time

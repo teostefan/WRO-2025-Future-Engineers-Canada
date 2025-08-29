@@ -46,21 +46,31 @@ struct CV_CameraData IO_readCamera() {
         }
     }
 
-    if (biggestredbox->y[0] == biggestredbox->y[1] && biggestgreenbox->y[0] == biggestgreenbox->y[1]) {
+    if (biggestredbox->y[0] == 0 && biggestredbox->y[1] == 0 && biggestgreenbox->y[0] == 0 && biggestgreenbox->y[1] == 0) {
         cameraData.obstacle_spotted = 0;
         cameraData.obstacle_x = -1;
         cameraData.obstacle_y = -1;
         cameraData.obstacle_colour = -1;
-    } else if (((biggestredbox->y[0] + (biggestredbox->y[1] - biggestredbox->y[0]) / 2) < (biggestgreenbox->y[0] + (biggestgreenbox->y[1] - biggestgreenbox->y[0]) / 2)) || (biggestgreenbox->y[0] == biggestgreenbox->y[1])) {
+    } else if ((((biggestredbox->y[0] + (biggestredbox->y[1] - biggestredbox->y[0]) / 2) < (biggestgreenbox->y[0] + (biggestgreenbox->y[1] - biggestgreenbox->y[0]) / 2)) && (biggestredbox->y[1] != 0)) || (biggestgreenbox->y[1] == 0)) {
         cameraData.obstacle_spotted = 1;
         cameraData.obstacle_x = (biggestredbox->x[0] + (biggestredbox->x[1] - biggestredbox->x[0]) / 2);
         cameraData.obstacle_y = (biggestredbox->y[0] + (biggestredbox->y[1] - biggestredbox->y[0]) / 2);
         cameraData.obstacle_colour = RED;
-    } else if (((biggestredbox->y[0] + (biggestredbox->y[1] - biggestredbox->y[0]) / 2) > (biggestgreenbox->y[0] + (biggestgreenbox->y[1] - biggestgreenbox->y[0]) / 2)) || (biggestredbox->y[0] == biggestredbox->y[1])) {
+        if (map[stretch][0] == -1) {
+            map[stretch][0] = RED;
+        } else if (map[stretch][1] == -1) {
+            map[stretch][1] = RED;
+        }
+    } else if ((((biggestredbox->y[0] + (biggestredbox->y[1] - biggestredbox->y[0]) / 2) > (biggestgreenbox->y[0] + (biggestgreenbox->y[1] - biggestgreenbox->y[0]) / 2)) && (biggestgreenbox->y[1] != 0)) || (biggestredbox->y[1] == 0)) {
         cameraData.obstacle_spotted = 1;
         cameraData.obstacle_x = (biggestgreenbox->x[0] + (biggestgreenbox->x[1] - biggestgreenbox->x[0]) / 2);
         cameraData.obstacle_y = (biggestredbox->y[0] + (biggestredbox->y[1] - biggestredbox->y[0]) / 2);
         cameraData.obstacle_colour = GREEN;
+        if (map[stretch][0] == -1) {
+            map[stretch][0] = GREEN;
+        } else if (map[stretch][1] == -1) {
+            map[stretch][1] = GREEN;
+        }
     } else {
         cameraData.obstacle_spotted = 0;
         cameraData.obstacle_x = -1;
@@ -73,144 +83,42 @@ struct CV_CameraData IO_readCamera() {
     return cameraData;
 }
 
-float IO_readFrontTOF() {
+void IO_initializeTOFs() {
     popen("i2cdetect -y 1", "r");
-
-    int i = i2cmux_switch(0);
-
-    if (i != 1) {
-        printf("Error switching MUX.");
+    for (int i = 0; i < 4; i++) {
+        i2cmux_switch(i);
+        tofInit(1, 0x29, 0);
     }
-    printf("MUX device successfully opened.\n");
-
-    popen("i2cdetect -y 1", "r");
-
-    int iDistance;
-    int model, revision;
-
-    i = tofInit(1, 0x29, 0);
-    if (i != 1) {
-        printf("kaput");
-    }
-    printf("VL53L0X device successfully opened.\n");
-    i = tofGetModel(&model, &revision);
-    printf("Model ID - %d\n", model);
-    printf("Revision ID - %d\n", revision);
-
-    iDistance = tofReadDistance();
-    // if (iDistance < 4096) // valid range?
-    printf("Distance = %dmm\n", iDistance);
-
-    return iDistance;
-}
-
-float IO_readRearTOF() {
-    popen("i2cdetect -y 1", "r");
-
-    int i = i2cmux_switch(3);
-
-    if (i != 1) {
-        printf("Error switching MUX.");
-    }
-    printf("MUX device successfully opened.\n");
-
-    popen("i2cdetect -y 1", "r");
-
-    int iDistance;
-    int model, revision;
-
-    i = tofInit(1, 0x29, 0);
-    if (i != 1) {
-        printf("kaput");
-    }
-    printf("VL53L0X device successfully opened.\n");
-    i = tofGetModel(&model, &revision);
-    printf("Model ID - %d\n", model);
-    printf("Revision ID - %d\n", revision);
-
-    iDistance = tofReadDistance();
-    // if (iDistance < 4096) // valid range?
-    printf("Distance = %dmm\n", iDistance);
-
-    return iDistance;
-}
-
-float IO_readRightTOF() {
-    popen("i2cdetect -y 1", "r");
-
-    int i = i2cmux_switch(1);
-
-    if (i != 1) {
-        printf("Error switching MUX.");
-    }
-    printf("MUX device successfully opened.\n");
-
-    popen("i2cdetect -y 1", "r");
-
-    int iDistance;
-    int model, revision;
-
-    i = tofInit(1, 0x29, 0);
-    if (i != 1) {
-        printf("kaput");
-    }
-    printf("VL53L0X device successfully opened.\n");
-    i = tofGetModel(&model, &revision);
-    printf("Model ID - %d\n", model);
-    printf("Revision ID - %d\n", revision);
-
-    iDistance = tofReadDistance();
-    // if (iDistance < 4096) // valid range?
-    printf("Distance = %dmm\n", iDistance);
-
-    return iDistance;
-}
-
-float IO_readLeftTOF() {
-    popen("i2cdetect -y 1", "r");
-
-    int i = i2cmux_switch(2);
-
-    if (i != 1) {
-        printf("Error switching MUX.");
-    }
-    printf("MUX device successfully opened.\n");
-
-    popen("i2cdetect -y 1", "r");
-
-    int iDistance;
-    int model, revision;
-
-    i = tofInit(1, 0x29, 0);
-    if (i != 1) {
-        printf("kaput");
-    }
-    printf("VL53L0X device successfully opened.\n");
-    i = tofGetModel(&model, &revision);
-    printf("Model ID - %d\n", model);
-    printf("Revision ID - %d\n", revision);
-
-    iDistance = tofReadDistance();
-    // if (iDistance < 4096) // valid range?
-    printf("Distance = %dmm\n", iDistance);
-
-    return iDistance;
 }
 
 float IO_readTOF(int axis, int looking_direction) {
+    int mux;
+    char *side[] = {
+        "Front",
+        "Right",
+        "Left",
+        "Rear"};
+
     if (axis == VERTICAL) {
         if (looking_direction) {
-            return IO_readFrontTOF();
+            mux = 0;
         } else {
-            return IO_readRearTOF();
+            mux = 3;
         }
     } else {
         if (looking_direction) {
-            return IO_readRightTOF();
+            mux = 1;
         } else {
-            return IO_readLeftTOF();
+            mux = 2;
         }
     }
+
+    i2cmux_switch(mux);
+
+    int distance = tofReadDistance();
+    printf("%s distance = %dmm\n", side[mux], distance);
+
+    return distance;
 }
 
 float IO_readGyroscope(int startDirection, int direction, int stretch) {

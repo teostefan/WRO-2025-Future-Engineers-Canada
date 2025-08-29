@@ -9,13 +9,15 @@ int main() {
         }
     }
 
+    IO_initializeTOFs();
+
     // set startDirection to CLOCKWISE if left TOF sees edge of track, COUNTERCLOCKWISE if right TOF sees it instead
     float leftDistance;
     float rightDistance;
     do {
         leftDistance = IO_readTOF(HORIZONTAL, LEFT);
         rightDistance = IO_readTOF(HORIZONTAL, RIGHT);
-        startDirection = leftDistance <= SEE_WALL_DISTANCE && rightDistance >= SEE_WALL_DISTANCE;
+        startDirection = rightDistance <= SEE_WALL_DISTANCE && leftDistance >= SEE_WALL_DISTANCE;
     } while (leftDistance > SEE_WALL_DISTANCE && rightDistance > SEE_WALL_DISTANCE);
 
     // calibrate sensors
@@ -27,13 +29,19 @@ int main() {
 
     IO_initializeDriveMotor();
     IO_initializeSteeringMotor();
+    IO_writeToDriveMotor(0);
     IO_writeToSteeringMotor(0, FORWARDS);
 
     // driveOpenChallenge();
     // driveObstacleChallenge();
 
-    IO_uninitializeDriveMotor();
+    driveFirstLapStretch(startDirection);
+
+    printf("stopping");
+
+    IO_writeToDriveMotor(0);
     IO_writeToSteeringMotor(0, FORWARDS);
+    IO_uninitializeDriveMotor();
     IO_uninitializeSteeringMotor();
 
     printf("\nthe end.\n");

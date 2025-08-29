@@ -375,46 +375,52 @@ int driveFirstLapStretch(int direction) {
     float leftDistance;
     float rightDistance;
     float frontDistance;
-    float rearDistance;
-    float orientation;
     struct CV_CameraData nearestObstacle;
     int relative_x;
 
-    IO_writeToDriveMotor(FIRST_LAP_STRETCH_SPEED * (((direction == startDirection) * 2) - 1));
+    // IO_writeToDriveMotor(FIRST_LAP_STRETCH_SPEED / 2 * (((direction == startDirection) * 2) - 1));
 
     do {
         float correction = 0;
-        orientation = IO_readGyroscope(startDirection, direction, stretch);
-        leftDistance = IO_readTOF(HORIZONTAL, !direction) * cos(orientation);
-        rightDistance = IO_readTOF(HORIZONTAL, direction) * cos(orientation);
-        frontDistance = IO_readTOF(HORIZONTAL, direction) * cos(orientation);
-        rearDistance = IO_readTOF(HORIZONTAL, !direction) * cos(orientation);
+        leftDistance = IO_readTOF(HORIZONTAL, !direction);
+        rightDistance = IO_readTOF(HORIZONTAL, direction);
+        frontDistance = IO_readTOF(VERTICAL, direction);
         nearestObstacle = IO_readCamera();
+        printf("\nobstacle_spotted :%d", nearestObstacle.obstacle_spotted);
+        printf("\nobstacle_colour :%d", nearestObstacle.obstacle_colour);
+        printf("\nobstacle_x :%d", nearestObstacle.obstacle_x);
+        printf("\nobstacle_y :%d\n", nearestObstacle.obstacle_y);
 
         if (nearestObstacle.obstacle_spotted) {
-            if (map[stretch][0] == -1) {
-                map[stretch][0] = nearestObstacle.obstacle_colour;
-            } else if (map[stretch][1] == -1) {
-                map[stretch][1] = nearestObstacle.obstacle_colour;
+            if (nearestObstacle.obstacle_colour == RED) {
+                relative_x = (int)sqrt(pow((CV_FRAME_WIDTH - nearestObstacle.obstacle_x), 2) + pow((CV_FRAME_HEIGHT - nearestObstacle.obstacle_y), 2));
+                if ((9 * CV_FRAME_WIDTH / 10) > nearestObstacle.obstacle_x) {
+                    correction = FIRST_AVOIDED_P * relative_x;
+                }
+            } else if (nearestObstacle.obstacle_colour == GREEN) {
+                relative_x = (int)sqrt(pow((nearestObstacle.obstacle_x), 2) + pow((CV_FRAME_HEIGHT - nearestObstacle.obstacle_y), 2));
+                if ((CV_FRAME_WIDTH / 10) < nearestObstacle.obstacle_x) {
+                    correction = -1 * FIRST_AVOIDED_P * relative_x;
+                }
             }
-            relative_x = (int)sqrt(pow(((CV_FRAME_WIDTH / 2) - nearestObstacle.obstacle_x), 2) + pow(nearestObstacle.obstacle_y, 2));
-            if (relative_x < (CV_FRAME_WIDTH / 4)) {
-                correction = (((CV_FRAME_WIDTH / 2) > nearestObstacle.obstacle_x) * 2 - 1) * FIRST_AVOIDED_P * ((CV_FRAME_WIDTH / 2) - relative_x);
+            if ((leftDistance < DO_NOT_CRASH_DISTANCE) && (nearestObstacle.obstacle_colour == GREEN)) {
+                correction -= FIRST_WALL_P * (DO_NOT_CRASH_DISTANCE - leftDistance);
             }
-            if ((leftDistance < AVOID_DISTANCE) && (nearestObstacle.obstacle_colour == GREEN)) {
-                correction -= FIRST_WALL_P * (AVOID_DISTANCE - leftDistance);
-            } else if ((rightDistance < AVOID_DISTANCE) && (nearestObstacle.obstacle_colour == RED)) {
-                correction += FIRST_WALL_P * (AVOID_DISTANCE - rightDistance);
+            if ((rightDistance < DO_NOT_CRASH_DISTANCE) && (nearestObstacle.obstacle_colour == RED)) {
+                correction += FIRST_WALL_P * (DO_NOT_CRASH_DISTANCE - rightDistance);
             }
             IO_writeToSteeringMotor(correction, direction);
         } else {
-            IO_writeToSteeringMotor((FIRST_CENTRED_P * (rightDistance - leftDistance)), direction);
+            // IO_writeToSteeringMotor((FIRST_CENTRED_P * (rightDistance - leftDistance)), direction);
+            IO_writeToSteeringMotor(0, direction);
         }
-    } while ((rearDistance < (STRETCH_LENGTH - TURN_DISTANCE - LENGTH)) || (frontDistance > TURN_DISTANCE));
+    } while ((nearestObstacle.obstacle_spotted) || (frontDistance > TURN_DISTANCE));
 
     if (map[stretch][1] == -1) {
         map[stretch][1] = map[stretch][0];
     }
+
+    IO_writeToDriveMotor(0);
 
     printf("\nfirst obstacle=%u\nsecond obstacle=%u\n", map[stretch][0], map[stretch][1]);
 

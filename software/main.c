@@ -5,7 +5,7 @@
 #include "globals.h"
 
 int main() {
-    // calibrate sensors
+    //  calibrate sensors
     popen("i2cdetect -y 1", "r");
     for (int i = 0; i < 4; i++) {
         i2cmux_switch(i);
@@ -27,6 +27,10 @@ int main() {
     startDirection = CLOCKWISE;
     float frontDistance;
     float rearDistance;
+    float rightDistance;
+    float leftDistance;
+    int distances[10];
+    int error;
     int direction = CLOCKWISE;
     struct bnoeul angles = {0.0, 0.0, 0.0};
     float zeroHeading;
@@ -44,12 +48,163 @@ int main() {
     esc_enable();
     esc_servo_init();
     esc_servo_steer(0);
-    esc_drive(1, 150);
+    esc_coast();
+    esc_drive(1, 100);
 
     // driveOpenChallenge();
-    //  driveObstacleChallenge();
+    // driveObstacleChallenge();
 
-    // driveFirstLapStretch(startDirection);
+    /* green-green manoeuvre
+
+    esc_servo_steer(0);
+
+    do {
+        i2cmux_switch(FRONT_MUX);
+        usleep(50000); // 50ms
+        frontDistance = tofReadDistance();
+        usleep(50000); // 50ms
+        i2cmux_switch(LEFT_MUX);
+        usleep(50000); // 50ms
+        leftDistance = tofReadDistance();
+
+        error = (int)(0.5 * (zeroHeading - angles.eul_head));
+        if (error > 30) {
+            error = 30;
+        } else if (error < -30) {
+            error = -30;
+        }
+
+        if (leftDistance < 130) {
+            error += 5;
+        } else if (leftDistance > 230 && leftDistance < 4000) {
+            error -= 5;
+        }
+
+        esc_servo_steer(error);
+
+        trueHeading = angles.eul_head - zeroHeading;
+
+        if (trueHeading < 0) {
+            trueHeading += 360;
+        }
+
+        usleep(50000); // 50ms
+    } while (frontDistance > 400 || frontDistance < 50);
+
+    */
+
+    /* red-red manoeuvre
+
+    esc_servo_steer(0);
+
+    do {
+        i2cmux_switch(FRONT_MUX);
+        usleep(50000); // 50ms
+        frontDistance = tofReadDistance();
+        usleep(50000); // 50ms
+        i2cmux_switch(RIGHT_MUX);
+        usleep(50000); // 50ms
+        rightDistance = tofReadDistance();
+
+        error = (int)(0.5 * (zeroHeading - angles.eul_head));
+        if (error > 30) {
+            error = 30;
+        } else if (error < -30) {
+            error = -30;
+        }
+
+        if (rightDistance < 150) {
+            error -= 5;
+        } else if (rightDistance > 250 && rightDistance < 4000) {
+            error += 5;
+        }
+
+        esc_servo_steer(error);
+
+        trueHeading = angles.eul_head - zeroHeading;
+
+        if (trueHeading < 0) {
+            trueHeading += 360;
+        }
+
+        usleep(50000); // 50ms
+    } while (frontDistance > 400 || frontDistance < 50);
+
+    */
+
+    /* stay straight using gyro
+
+    esc_servo_steer(0);
+
+    do {
+        i2cmux_switch(FRONT_MUX);
+        usleep(50000); // 50ms
+        frontDistance = tofReadDistance();
+
+        if (BNO_get_eul(&angles, startDirection, direction, 1) == -1) {
+            printf("An error occurred.");
+        }
+
+        esc_servo_steer((int)(0.5 * (zeroHeading - angles.eul_head)));
+
+        trueHeading = angles.eul_head - zeroHeading;
+
+        if (trueHeading < 0) {
+            trueHeading += 360;
+        }
+
+        usleep(50000); // 50ms
+    } while (frontDistance > 400 || frontDistance < 50);
+
+    */
+
+    /* Turn around
+
+    esc_servo_steer(OPEN_TURN_ANGLE);
+
+    // Turn until turn completed
+    do {
+        if (BNO_get_eul(&angles, startDirection, direction, 1) == -1) {
+            printf("An error occurred.");
+        }
+        usleep(50000); // 50ms
+
+        trueHeading = angles.eul_head - zeroHeading;
+        if (trueHeading < 0) {
+            trueHeading += 360;
+        }
+        printf("Heading = %lf degrees ", trueHeading);
+    } while (trueHeading < 70 || trueHeading > 340);
+
+    esc_servo_steer(0);
+
+    do {
+        i2cmux_switch(FRONT_MUX);
+        usleep(50000); // 50ms
+        frontDistance = tofReadDistance();
+    } while (frontDistance > 400 || frontDistance < 50);
+
+    esc_servo_steer(OPEN_TURN_ANGLE);
+
+    // Turn until turn completed
+    do {
+        if (BNO_get_eul(&angles, startDirection, direction, 1) == -1) {
+            printf("An error occurred.");
+        }
+        usleep(50000); // 50ms
+
+        trueHeading = angles.eul_head - zeroHeading;
+        if (trueHeading < 0) {
+            trueHeading += 360;
+        }
+        printf("Heading = %lf degrees ", trueHeading);
+    } while (trueHeading < 150 || trueHeading > 340);
+
+    esc_servo_steer(0);
+
+    */
+
+    /* drive 3 laps with reverse
 
     do {
         i2cmux_switch(FRONT_MUX);
@@ -327,6 +482,8 @@ int main() {
     } while ((trueHeading >= 180 && trueHeading <= 320) || (trueHeading < 0 || trueHeading > 360));
 
     esc_servo_steer(0); // end of lap 3
+
+    */
 
     printf("stopping");
 

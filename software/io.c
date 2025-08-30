@@ -93,6 +93,8 @@ void IO_initializeTOFs() {
 
 float IO_readTOF(int axis, int looking_direction) {
     int mux;
+    int distance = 0;
+    int distances[10];
     char *side[] = {
         "Front",
         "Right",
@@ -115,7 +117,21 @@ float IO_readTOF(int axis, int looking_direction) {
 
     i2cmux_switch(mux);
 
-    int distance = tofReadDistance();
+    for (int i = 0; i < 10; i++) {
+        distances[i] = tofReadDistance();
+    }
+    for (int i = 0; i < 9; i++) {
+        if (distances[i] < distances[i + 1]) {
+            int temp = distances[i + 1];
+            distances[i + 1] = distances[i];
+            distances[i] = temp;
+        }
+    }
+    for (int i = 3; i < 7; i++) {
+        distance += distances[i];
+    }
+    distance = distance / 4;
+
     printf("%s distance = %dmm\n", side[mux], distance);
 
     return distance;
@@ -130,7 +146,6 @@ float IO_readGyroscope(int startDirection, int direction, int stretch) {
     printf("Heading = %lf degrees ", angles.eul_head);
     printf("Roll = %lf degrees ", angles.eul_roll);
     printf("Pitch = %lf degrees\n", angles.eul_pitc);
-    usleep(50000); // 50ms
 
     return angles.eul_head;
 }
@@ -151,7 +166,7 @@ int IO_writeToDriveMotor(int speed) {
     if (speed > 0) {
         esc_drive(1, speed);
     } else if (speed < 0) {
-        esc_drive(0, -speed);
+        esc_drive(0, speed);
     } else {
         esc_coast();
     }

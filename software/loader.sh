@@ -20,6 +20,8 @@ while true; do
             else
                 echo "Button press detected; stopping main program."
                 sudo pkill -f "/home/admin/Documents/WRO-2025-Future-Engineers-Canada/builds/main"
+                sudo /home/admin/Documents/WRO-2025-Future-Engineers-Canada/builds/stop &
+                raspi-gpio set 23 op dl
                 is_running=false
             fi
             last_press_time=$current_time

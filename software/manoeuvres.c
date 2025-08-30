@@ -322,8 +322,7 @@ int driveTurn(int direction) {
 int driveOpenStretch(int direction) {
     // Complete straight section during the open challenge, going forwards on laps 1 and 3, and backwards on lap 2
     float frontDistance;
-    float leftDistance;
-    float rightDistance;
+    float sideDistance;
     float orientation;
     float dt;
     float error;
@@ -338,17 +337,16 @@ int driveOpenStretch(int direction) {
     do {
         orientation = IO_readGyroscope(startDirection, direction, stretch);
         frontDistance = IO_readTOF(VERTICAL, direction) * cos(orientation);
-        leftDistance = IO_readTOF(HORIZONTAL, !direction) * cos(orientation);
-        rightDistance = IO_readTOF(HORIZONTAL, direction) * cos(orientation);
-        if ((rightDistance - leftDistance) != 0) {
-            error = rightDistance - leftDistance;
+        sideDistance = IO_readTOF(HORIZONTAL, !direction) * cos(orientation);
+        if ((CENTRE_DISTANCE - sideDistance) != 0) {
+            error = CENTRE_DISTANCE - sideDistance;
         } else {
             error = pid.prev_error;
         }
         thisTime = millis();
         dt = (thisTime - lastTime) / 1000.0f;
         correction = PID_calculatePID(&pid, error, dt);
-        IO_writeToSteeringMotor(fabsf(correction), (correction >= 0) == (direction == startDirection));
+        IO_writeToSteeringMotor(correction, direction);
     } while (frontDistance > TURN_DISTANCE);
 
     return 0;

@@ -2,14 +2,20 @@ CC = gcc
 CFLAGS = -Wall -Wextra -O2 -Isoftware
 SRC = software/main.c software/cv/cv.c software/kf/kf.c software/kf/kf_matrix.c software/pid/pid.c software/i2cmux/i2cmux.c software/gyro/gyro.c software/esc/esc.c software/tof/tof.c
 OUT = builds/main
+OUT_STOP = builds/stop
 TESTS = builds/test_cv builds/test_tof builds/test_i2cmux builds/test_gyro builds/test_esc builds/test_kf
 
 # Ensure builds directory exists before building.
 $(shell mkdir -p builds)
 
-all: $(OUT)
+all: $(OUT) $(OUT_STOP)
 
-all-tests: $(OUT) $(TESTS)
+all-tests: $(OUT) $(OUT_STOP) $(TESTS)
+
+$(OUT_STOP): software/stop.c
+	@echo -ne "\033[1;34m[2] - Compiling: \033[0m"
+	$(CC) $(CFLAGS) -o $(OUT_STOP) software/stop.c -lm -lpigpio -lrt
+	@echo -e "\033[1;32mBuild successful!\033[0m"
 
 $(OUT): $(SRC) software/kf/kf_matrix.h
 	@echo -ne "\033[1;34m[2] - Compiling: \033[0m"

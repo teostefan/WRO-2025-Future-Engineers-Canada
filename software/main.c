@@ -1,3 +1,6 @@
+#ifndef MAIN_C
+#define MAIN_C
+
 #include "challenges.c"
 #include "globals.h"
 #include "io.c"
@@ -11,6 +14,7 @@ int main() {
 
     IO_initializeTOFs();
 
+    /*
     // set startDirection to CLOCKWISE if left TOF sees edge of track, COUNTERCLOCKWISE if right TOF sees it instead
     float leftDistance;
     float rightDistance;
@@ -19,28 +23,46 @@ int main() {
         rightDistance = IO_readTOF(HORIZONTAL, RIGHT);
         startDirection = rightDistance <= SEE_WALL_DISTANCE && leftDistance >= SEE_WALL_DISTANCE;
     } while (leftDistance > SEE_WALL_DISTANCE && rightDistance > SEE_WALL_DISTANCE);
+     */
+    startDirection = CLOCKWISE;
 
     // calibrate sensors
-    struct bnoeul testAngles = {0.0, 0.0, 0.0};
     BNO_init_i2cbus();
-    if (BNO_get_eul(&testAngles, startDirection, startDirection, 1) == -1) {
-        printf("An error occurred.");
-    }
 
     IO_initializeDriveMotor();
     IO_initializeSteeringMotor();
-    IO_writeToDriveMotor(0);
+    IO_writeToDriveMotor(100);
     IO_writeToSteeringMotor(0, FORWARDS);
 
     // driveOpenChallenge();
-    // driveObstacleChallenge();
+    //  driveObstacleChallenge();
 
-    driveFirstLapStretch(startDirection);
+    // driveFirstLapStretch(startDirection);
+
+    float frontDistance;
+    int direction = CLOCKWISE;
+
+    do {
+        frontDistance = IO_readTOF(VERTICAL, direction);
+    } while (frontDistance > TURN_DISTANCE / 3);
+
+    float orientation;
+
+    IO_writeToSteeringMotor(OPEN_TURN_ANGLE, direction);
+
+    // Turn until turn completed
+    do {
+        orientation = IO_readGyroscope(startDirection, direction, 1);
+    } while (orientation < 90);
+
+    IO_writeToSteeringMotor(STRAIGHT_STEERING, direction);
 
     printf("stopping");
 
     IO_writeToDriveMotor(0);
+    sleep(2);
     IO_writeToSteeringMotor(0, FORWARDS);
+    sleep(2);
     IO_uninitializeDriveMotor();
     IO_uninitializeSteeringMotor();
 
@@ -48,3 +70,5 @@ int main() {
 
     return 0;
 }
+
+#endif // MAIN_C

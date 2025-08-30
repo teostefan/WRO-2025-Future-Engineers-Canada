@@ -94,7 +94,7 @@
 #define TT_STOP_ANGLE 45.0
 #define TT_TURN_ANGLE_2 45.0
 
-#define KP 1
+#define KP 0.1
 #define KI 0
 #define KD 0
 

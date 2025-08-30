@@ -30,7 +30,7 @@ int main() {
 
     // For Raspberry Pi's, the I2C channel is usually 1
     // For other boards (e.g. OrangePi) it's 0
-    i = tofInit(1, 0x29, 0); // set long range mode (up to 2m)
+    i = tofInit(1, 0x29, 1); // set long range mode (up to 2m)
     if (i != 1) {
         printf("kaput");
         return -1; // problem - quit

@@ -123,6 +123,11 @@
 #define TOTAL_LAP_NUMBER 3
 #define LAP_TURN_NUMBER 4
 
+#define FRONT_MUX 0
+#define RIGHT_MUX 1
+#define LEFT_MUX 2
+#define REAR_MUX 3
+
 int startDirection;
 int map[4][2];
 int stretch = 0;

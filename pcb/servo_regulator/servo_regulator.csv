@@ -1,0 +1,7 @@
+"Reference","Qty","Value","DNP","Exclude from BOM","Exclude from Board","Footprint","Datasheet"
+"C1","1","0.33uF","","","","Capacitor_THT:C_Disc_D4.7mm_W2.5mm_P5.00mm","~"
+"C2","1","0.1uF","","","","Capacitor_THT:C_Disc_D4.7mm_W2.5mm_P5.00mm","~"
+"C3","1","100uF","","","","Capacitor_THT:C_Radial_D5.0mm_H5.0mm_P2.00mm","~"
+"J1","1","IN","","","","Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical","~"
+"J2","1","OUT","","","","Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical","~"
+"U1","1","LM7805_TO220","","","","Package_TO_SOT_THT:TO-220-3_Vertical","https://www.onsemi.cn/PowerSolutions/document/MC7800-D.PDF"

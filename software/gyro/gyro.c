@@ -94,9 +94,7 @@ int BNO_get_mag(struct bnomag *bnod_ptr) {
 /* ------------------------------------------------------------ *
  *  get_eul() - read Euler orientation into the global struct   *
  * ------------------------------------------------------------ */
-int BNO_get_eul(struct bnoeul *bnod_ptr, int startDirection, int direction, int stretch) {
-    double neutralOrientation = (abs((stretch - 1) * 90 - (360 * (!startDirection))) + (180 * (startDirection ^ direction))) % 360;
-
+int BNO_get_eul(struct bnoeul *bnod_ptr) {
     char reg = BNO055_EULER_H_LSB_ADDR;
     if (write(i2cfd, &reg, 1) != 1) {
         printf("Error: I2C write failure for register 0x%02X\n", reg);
@@ -113,33 +111,16 @@ int BNO_get_eul(struct bnoeul *bnod_ptr, int startDirection, int direction, int 
 
     int16_t buf = ((int16_t)data[1] << 8) | data[0];
     if (VERBOSE) printf("Debug: Euler Orientation H: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[0], data[1], buf);
-    double rawHeading = (double)buf / 16.0;
-    if (rawHeading < 0) {
-        rawHeading += 360;
-    }
-    double absoluteHeading = fabs(rawHeading - (360 * (!startDirection)));
-    double goodHeading = (absoluteHeading - neutralOrientation) * (direction * 2 - 1);
-    bnod_ptr->eul_head = goodHeading;
+    bnod_ptr->eul_head = (double)buf / 16.0;
 
     buf = ((int16_t)data[3] << 8) | data[2];
     if (VERBOSE) printf("Debug: Euler Orientation R: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[2], data[3], buf);
-    double rawRoll = (double)buf / 16.0;
-    if (rawRoll < 0) {
-        rawRoll += 360;
-    }
-    double absoluteRoll = fabs(rawRoll - (360 * (!startDirection)));
-    double goodRoll = (absoluteRoll - neutralOrientation) * (direction * 2 - 1);
-    bnod_ptr->eul_roll = goodRoll;
+    bnod_ptr->eul_roll = (double)buf / 16.0;
+    ;
 
     buf = ((int16_t)data[5] << 8) | data[4];
     if (VERBOSE) printf("Debug: Euler Orientation P: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[4], data[5], buf);
-    double rawPitch = (double)buf / 16.0;
-    if (rawPitch < 0) {
-        rawPitch += 360;
-    }
-    double absolutePitch = fabs(rawPitch - (360 * (!startDirection)));
-    double goodPitch = (absolutePitch - neutralOrientation) * (direction * 2 - 1);
-    bnod_ptr->eul_pitc = goodPitch;
+    bnod_ptr->eul_pitc = (double)buf / 16.0;
     return (0);
 }
 

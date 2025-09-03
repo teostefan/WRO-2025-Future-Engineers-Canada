@@ -128,12 +128,18 @@
 #define LEFT_MUX 2
 #define REAR_MUX 3
 
-#define TURN_RANGE 40
-#define STOP_DISTANCE_RANGE 100
+#define RED_RED 1
+#define GREEN_GREEN 2
+#define RED_GREEN 3
+#define GREEN_RED 4
+
+#define TURN_RANGE 30
+#define STOP_DISTANCE_RANGE 200
 #define HUG_DISTANCE_RANGE 50
 
 int startDirection;
-int map[4][2];
+int direction;
+int map[4];
 int stretch;
 struct PID_Controller pid = {KP, KI, KD, 0.0f, 0.0f};
 struct CV_CameraData cv_data = {0, 0, 0, 0};
@@ -147,7 +153,6 @@ int rightCount;
 int leftCount;
 int distances[10];
 int error;
-int direction = CLOCKWISE;
 struct bnoeul angles = {0.0, 0.0, 0.0};
 float zeroHeading;
 float trueHeading;

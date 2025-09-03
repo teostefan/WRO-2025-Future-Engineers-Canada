@@ -12,8 +12,8 @@
 #define HSV_GREEN {112, 79.4, 83.9}
 
 #define H_HM_RED (unsigned char[]){35, 1}
-#define S_HM_RED (unsigned char[]){60, 100}
-#define V_HM_RED (unsigned char[]){20, 60}
+#define S_HM_RED (unsigned char[]){20, 100}
+#define V_HM_RED (unsigned char[]){20, 100}
 
 #define H_HM_GREEN (unsigned char[]){7, 16}
 #define S_HM_GREEN (unsigned char[]){20, 100}

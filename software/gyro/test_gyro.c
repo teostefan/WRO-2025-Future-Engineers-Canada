@@ -11,12 +11,12 @@ int main() {
     // For Raspberry Pi's, the I2C channel is usually 1
     // For other boards (e.g. OrangePi) it's 0
     BNO_init_i2cbus();
-    if (BNO_get_eul(&angles, 1, 1, 1) == -1) {
+    if (BNO_get_eul(&angles) == -1) {
         printf("An error occurred.");
     }
 
     for (i = 0; i < 100; i++) { // read values 20 times a second for 1 minute
-        if (BNO_get_eul(&angles, 1, 1, 1) == -1) {
+        if (BNO_get_eul(&angles) == -1) {
             printf("An error occurred.");
         }
         printf("Heading = %lf degrees ", angles.eul_head);

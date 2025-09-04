@@ -11,26 +11,29 @@ int main() {
     CV_frame greenframe;
     int frame_count = 0;
 
-    CV_mask redmask;
-    CV_mask greenmask;
-    CV_bounding_box_list redbboxes = {0};
-    CV_bounding_box_list greenbboxes = {0};
-
     while (frame_count++ < 40) { // Limit to 100 frames for demonstration
         CV_camerapipe camera = CV_getcamera("/dev/video0", "gblur=0.5");
         if (!camera) return 0;
+
+        CV_mask redmask;
+        CV_mask greenmask;
+
+        CV_bounding_box_list redbboxes = {0};
+        CV_bounding_box_list greenbboxes = {0};
 
         if (!CV_getHSVframe(greenframe, camera)) return 0; // Load an HSV frame for detecting green obstacles.
         if (!CV_getHSVframe(redframe, camera)) return 0;   // Load an HSV frame for detecting red obstacles.
 
         // Detect green objects
         CV_chromakey(greenmask, greenframe, H_HM_GREEN, S_HM_GREEN, V_HM_GREEN);
-        CV_masktracker(&greenbboxes, greenmask, 50);
+        CV_masktracker(&greenbboxes, greenmask, 15);
+
         /*
         if (!CV_getRGBframe(greenframe, camera)) return 0;                 // Load an RGB frame for display.
         CV_drawbb(greenframe, &greenbboxes, (unsigned char[]){0, 255, 0}); // Draw bounding boxes in green.
         CV_playframe(player, greenframe);                                  // Play the frame.
         */
+
         CV_bounding_box *biggestgreenbox = &greenbboxes.boxes[0];
         for (size_t i = 0; i < greenbboxes.count; i++) {
             CV_bounding_box *box = &greenbboxes.boxes[i];
@@ -45,7 +48,7 @@ int main() {
 
         // Detect red objects
         CV_chromakey(redmask, redframe, H_HM_RED, S_HM_RED, V_HM_RED);
-        CV_masktracker(&redbboxes, redmask, 50);
+        CV_masktracker(&redbboxes, redmask, 15);
         /*
         if (!CV_getRGBframe(redframe, camera)) return 0;               // Load an RGB frame for display.
         CV_drawbb(redframe, &redbboxes, (unsigned char[]){255, 0, 0}); // Draw bounding boxes in red.

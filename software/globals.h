@@ -112,7 +112,7 @@
 #define HORIZONTAL 0
 
 #define CLOCKWISE 1
-#define COUNTERCLOCKWISE 0
+#define COUNTERCLOCKWISE -1
 
 #define FORWARDS 1
 #define BACKWARDS 0

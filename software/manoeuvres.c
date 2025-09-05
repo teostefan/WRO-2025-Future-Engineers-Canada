@@ -1,418 +1,68 @@
 #include "globals.h"
 
-/* parallel park on the left side
+int look() {
+    CV_frame redframe;
+    CV_frame greenframe;
+    CV_mask redmask;
+    CV_mask greenmask;
+    CV_bounding_box_list redbboxes = {0};
+    CV_bounding_box_list greenbboxes = {0};
 
-    esc_drive(0, 125);
-
-    do {
-        i2cmux_switch(FRONT_MUX);
-        usleep(50000); // 50ms
-        frontDistance = tofReadDistance();
-        usleep(50000); // 50ms
-        i2cmux_switch(LEFT_MUX);
-        usleep(50000); // 50ms
-        leftDistance = tofReadDistance();
-
-        error = (int)(0.5 * (zeroHeading - angles.eul_head));
-        if (error > 30) {
-            error = 30;
-        } else if (error < -30) {
-            error = -30;
-        }
-
-        if (leftDistance < 450) {
-            error += 5;
-        } else if (leftDistance > 550 && leftDistance < 4000) {
-            error -= 5;
-        }
-
-        esc_servo_steer(error);
-
-        trueHeading = angles.eul_head - zeroHeading;
-
-        if (trueHeading < 0) {
-            trueHeading += 360;
-        }
-
-        usleep(50000); // 50ms
-    } while (frontDistance > 4000 || frontDistance < 600);
-
-    esc_servo_steer(-50);
+    int counter = 0;
+    int obstacles;
 
     do {
-        if (BNO_get_eul(&angles) == -1) {
-            printf("An error occurred.");
+        CV_camerapipe camera = CV_getcamera("/dev/video0", "gblur=0.5");
+        if (!camera) continue;
+
+        if (!CV_getHSVframe(greenframe, camera)) continue; // Load an HSV frame for detecting green obstacles.
+        if (!CV_getHSVframe(redframe, camera)) continue;   // Load an HSV frame for detecting red obstacles.
+
+        // Detect green objects
+        CV_chromakey(greenmask, greenframe, H_HM_GREEN, S_HM_GREEN, V_HM_GREEN);
+        CV_masktracker(&greenbboxes, greenmask, 50);
+        CV_bounding_box *biggestgreenbox = &greenbboxes.boxes[0];
+        for (size_t i = 0; i < greenbboxes.count; i++) {
+            CV_bounding_box *box = &greenbboxes.boxes[i];
+            if (((box->x[1] - box->x[0]) * (box->y[1] - box->y[0])) >= ((biggestgreenbox->x[1] - biggestgreenbox->x[0]) * (biggestgreenbox->y[1] - biggestgreenbox->y[0]))) {
+                biggestgreenbox->x[0] = box->x[0];
+                biggestgreenbox->x[1] = box->x[1];
+                biggestgreenbox->y[0] = box->y[0];
+                biggestgreenbox->y[1] = box->y[1];
+            }
         }
-        usleep(50000); // 50ms
 
-        trueHeading = angles.eul_head - zeroHeading;
-        if (trueHeading < 0) {
-            trueHeading += 360;
+        // Detect red objects
+        CV_chromakey(redmask, redframe, H_HM_RED, S_HM_RED, V_HM_RED);
+        CV_masktracker(&redbboxes, redmask, 50);
+        CV_bounding_box *biggestredbox = &redbboxes.boxes[0];
+        for (size_t i = 0; i < redbboxes.count; i++) {
+            CV_bounding_box *box = &redbboxes.boxes[i];
+            if (((box->x[1] - box->x[0]) * (box->y[1] - box->y[0])) >= ((biggestredbox->x[1] - biggestredbox->x[0]) * (biggestredbox->y[1] - biggestredbox->y[0]))) {
+                biggestredbox->x[0] = box->x[0];
+                biggestredbox->x[1] = box->x[1];
+                biggestredbox->y[0] = box->y[0];
+                biggestredbox->y[1] = box->y[1];
+            }
         }
-        printf(" first turn Heading = %f degrees ", trueHeading);
-    } while (trueHeading < 75 || trueHeading > 180);
 
-    esc_servo_steer(0);
-
-    do {
-        i2cmux_switch(REAR_MUX);
-        usleep(50000); // 50ms
-        rearDistance = tofReadDistance();
-    } while (rearDistance > 350);
-
-    esc_servo_steer(50);
-
-    // Turn until turn completed
-    do {
-        i2cmux_switch(REAR_MUX);
-        usleep(50000); // 50ms
-        rearDistance = tofReadDistance();
-    } while (rearDistance > 100);
-
-    esc_brake();
-
-    esc_servo_steer(-50);
-
-    esc_drive(1, 110);
-
-    // Turn until turn completed
-    do {
-        if (BNO_get_eul(&angles) == -1) {
-            printf("An error occurred.");
+        if (biggestredbox->y[0] == 0 && biggestredbox->y[1] == 0 && biggestgreenbox->y[0] == 0 && biggestgreenbox->y[1] == 0) {
+            counter--;
+        } else if (biggestredbox->y[0] != 0 && biggestredbox->y[1] != 0 && biggestgreenbox->y[0] == 0 && biggestgreenbox->y[1] == 0) {
+            obstacles = RED_RED;
+        } else if (biggestredbox->y[0] == 0 && biggestredbox->y[1] == 0 && biggestgreenbox->y[0] != 0 && biggestgreenbox->y[1] != 0) {
+            obstacles = GREEN_GREEN;
+        } else if ((biggestredbox->y[0] + (biggestredbox->y[1] - biggestredbox->y[0]) / 2) > (biggestgreenbox->y[0] + (biggestgreenbox->y[1] - biggestgreenbox->y[0]) / 2)) {
+            obstacles = RED_GREEN;
+        } else {
+            obstacles = GREEN_RED;
         }
-        usleep(50000); // 50ms
 
-        trueHeading = angles.eul_head - zeroHeading;
-        if (trueHeading < 0) {
-            trueHeading += 360;
-        }
-        printf("Heading = %f degrees ", trueHeading);
-    } while (trueHeading < 180 || trueHeading > 360);
+        CV_closecamera(camera);
+    } while (counter++ < 1);
 
-    */
-
-/* parallel park on the right side
-
-esc_drive(0, 125);
-
-do {
-    i2cmux_switch(FRONT_MUX);
-    usleep(50000); // 50ms
-    frontDistance = tofReadDistance();
-    usleep(50000); // 50ms
-    i2cmux_switch(RIGHT_MUX);
-    usleep(50000); // 50ms
-    rightDistance = tofReadDistance();
-
-    error = (int)(0.5 * (zeroHeading - angles.eul_head));
-    if (error > 30) {
-        error = 30;
-    } else if (error < -30) {
-        error = -30;
-    }
-
-    if (rightDistance < 450) {
-        error -= 5;
-    } else if (rightDistance > 550 && rightDistance < 4000) {
-        error += 5;
-    }
-
-    esc_servo_steer(error);
-
-    trueHeading = angles.eul_head - zeroHeading;
-
-    if (trueHeading < 0) {
-        trueHeading += 360;
-    }
-
-    usleep(50000); // 50ms
-} while (frontDistance > 4000 || frontDistance < 650);
-
-esc_servo_steer(50);
-
-do {
-    if (BNO_get_eul(&angles) == -1) {
-        printf("An error occurred.");
-    }
-    usleep(50000); // 50ms
-
-    trueHeading = angles.eul_head - zeroHeading;
-    if (trueHeading < 0) {
-        trueHeading += 360;
-    }
-    printf("Heading = %f degrees ", trueHeading);
-} while (trueHeading < 180 || trueHeading > 285);
-
-esc_servo_steer(0);
-
-do {
-    i2cmux_switch(REAR_MUX);
-    usleep(50000); // 50ms
-    rearDistance = tofReadDistance();
-} while (rearDistance > 300);
-
-esc_servo_steer(-50);
-
-// Turn until turn completed
-do {
-    i2cmux_switch(REAR_MUX);
-    usleep(50000); // 50ms
-    rearDistance = tofReadDistance();
-} while (rearDistance > 100);
-
-esc_brake();
-
-esc_servo_steer(50);
-
-esc_drive(1, 125);
-
-// Turn until turn completed
-do {
-    if (BNO_get_eul(&angles) == -1) {
-        printf("An error occurred.");
-    }
-    usleep(50000); // 50ms
-
-    trueHeading = angles.eul_head - zeroHeading;
-    if (trueHeading < 0) {
-        trueHeading += 360;
-    }
-    printf("Heading = %f degrees ", trueHeading);
-} while ((trueHeading > 180 && trueHeading < 355) || trueHeading > 360);
-
-*/
-
-/* pull out from the left side
-
-esc_servo_steer(50);
-
-// Turn until turn completed
-do {
-    if (BNO_get_eul(&angles) == -1) {
-        printf("An error occurred.");
-    }
-    usleep(50000); // 50ms
-
-    trueHeading = angles.eul_head - zeroHeading;
-    if (trueHeading < 0) {
-        trueHeading += 360;
-    }
-    printf("Heading = %f degrees ", trueHeading);
-} while (trueHeading < 70 || trueHeading > 180);
-
-esc_servo_steer(0);
-
-do {
-    i2cmux_switch(FRONT_MUX);
-    usleep(50000); // 50ms
-    frontDistance = tofReadDistance();
-} while (frontDistance > 500 || frontDistance < 100);
-
-esc_servo_steer(-50);
-
-// Turn until turn completed
-do {
-    if (BNO_get_eul(&angles) == -1) {
-        printf("An error occurred.");
-    }
-    usleep(50000); // 50ms
-
-    trueHeading = angles.eul_head - zeroHeading;
-    if (trueHeading < 0) {
-        trueHeading += 360;
-    }
-    printf("Heading = %f degrees ", trueHeading);
-} while (trueHeading > 20);
-
-esc_drive(0, 100);
-
-esc_servo_steer(50);
-
-// Turn until turn completed
-do {
-    if (BNO_get_eul(&angles) == -1) {
-        printf("An error occurred.");
-    }
-    usleep(50000); // 50ms
-
-    trueHeading = angles.eul_head - zeroHeading;
-    if (trueHeading < 0) {
-        trueHeading += 360;
-    }
-    printf("Heading = %f degrees ", trueHeading);
-} while (trueHeading > 10);
-
-esc_servo_steer(0);
-
-*/
-
-/* pull out from the right side
-
-esc_servo_steer(-50);
-
-// Turn until turn completed
-do {
-    if (BNO_get_eul(&angles) == -1) {
-        printf("An error occurred.");
-    }
-    usleep(50000); // 50ms
-
-    trueHeading = angles.eul_head - zeroHeading;
-    if (trueHeading < 0) {
-        trueHeading += 360;
-    }
-    printf("Heading = %f degrees ", trueHeading);
-} while (trueHeading < 180 || trueHeading > 290);
-
-esc_servo_steer(0);
-
-do {
-    i2cmux_switch(FRONT_MUX);
-    usleep(50000); // 50ms
-    frontDistance = tofReadDistance();
-} while (frontDistance > 500 || frontDistance < 100);
-
-esc_servo_steer(50);
-
-// Turn until turn completed
-do {
-    if (BNO_get_eul(&angles) == -1) {
-        printf("An error occurred.");
-    }
-    usleep(50000); // 50ms
-
-    trueHeading = angles.eul_head - zeroHeading;
-    if (trueHeading < 0) {
-        trueHeading += 360;
-    }
-    printf("Heading = %f degrees ", trueHeading);
-} while (trueHeading < 330 || trueHeading > 360);
-
-esc_drive(0, 100);
-
-esc_servo_steer(-50);
-
-// Turn until turn completed
-do {
-    if (BNO_get_eul(&angles) == -1) {
-        printf("An error occurred.");
-    }
-    usleep(50000); // 50ms
-
-    trueHeading = angles.eul_head - zeroHeading;
-    if (trueHeading < 0) {
-        trueHeading += 360;
-    }
-    printf("Heading = %f degrees ", trueHeading);
-} while ((trueHeading > 50 && trueHeading < 350) || trueHeading > 360);
-
-esc_servo_steer(0);
-
-*/
-
-/* obstacle tight left
-
-do {
-    i2cmux_switch(FRONT_MUX);
-    usleep(50000); // 50ms
-    frontDistance = tofReadDistance();
-} while (frontDistance > 1000 || frontDistance < 300);
-
-esc_servo_steer(OPEN_TURN_ANGLE);
-
-// Turn until turn completed
-do {
-    if (BNO_get_eul(&angles) == -1) {
-        printf("An error occurred.");
-    }
-    usleep(50000); // 50ms
-
-    trueHeading = angles.eul_head - zeroHeading;
-    if (trueHeading < 0) {
-        trueHeading += 360;
-    }
-    printf("Heading = %f degrees ", trueHeading);
-} while (trueHeading < 70 || trueHeading > 180);
-
-esc_servo_steer(0);
-
-do {
-    i2cmux_switch(FRONT_MUX);
-    usleep(50000); // 50ms
-    frontDistance = tofReadDistance();
-} while (frontDistance > 400 || frontDistance < 50);
-
-esc_servo_steer(-OPEN_TURN_ANGLE);
-
-// Turn until turn completed
-do {
-    if (BNO_get_eul(&angles) == -1) {
-        printf("An error occurred.");
-    }
-    usleep(50000); // 50ms
-
-    trueHeading = angles.eul_head - zeroHeading;
-    if (trueHeading < 0) {
-        trueHeading += 360;
-    }
-    printf("Heading = %f degrees ", trueHeading);
-} while (trueHeading < 180 || trueHeading > 310);
-
-esc_servo_steer(0);
-
-*/
-
-/* obstacle tight right
-
-do {
-    i2cmux_switch(FRONT_MUX);
-    usleep(50000); // 50ms
-    frontDistance = tofReadDistance();
-} while (frontDistance > 1000 || frontDistance < 300);
-
-esc_servo_steer(-OPEN_TURN_ANGLE);
-
-// Turn until turn completed
-do {
-    if (BNO_get_eul(&angles) == -1) {
-        printf("An error occurred.");
-    }
-    usleep(50000); // 50ms
-
-    trueHeading = angles.eul_head - zeroHeading;
-    if (trueHeading < 0) {
-        trueHeading += 360;
-    }
-    printf("Heading = %f degrees ", trueHeading);
-} while (trueHeading < 180 || trueHeading > 320);
-
-esc_servo_steer(0);
-
-do {
-    i2cmux_switch(FRONT_MUX);
-    usleep(50000); // 50ms
-    frontDistance = tofReadDistance();
-} while (frontDistance > 400 || frontDistance < 50);
-
-esc_servo_steer(OPEN_TURN_ANGLE);
-
-// Turn until turn completed
-do {
-    if (BNO_get_eul(&angles) == -1) {
-        printf("An error occurred.");
-    }
-    usleep(50000); // 50ms
-
-    trueHeading = angles.eul_head - zeroHeading;
-    if (trueHeading < 0) {
-        trueHeading += 360;
-    }
-    printf("Heading = %f degrees ", trueHeading);
-} while (trueHeading < 70 || trueHeading > 180);
-
-esc_servo_steer(0);
-
-*/
+    return obstacles;
+}
 
 int blind_go(int speed, float neutralHeading, int hugMux, int hugTarget, int stopMux, int stopTarget, int way) {
     float targetHeading = neutralHeading + zeroHeading;
@@ -559,7 +209,7 @@ int go(int speed, float neutralHeading, int hugMux, int hugTarget, int stopMux, 
     return 0;
 }
 
-int turn(int way, float targetHeading) {
+int turn(int steeringAngle, float targetHeading) {
     int cycle = 0;
     int maxRange = targetHeading + TURN_RANGE;
     if (maxRange > 360) {
@@ -572,7 +222,7 @@ int turn(int way, float targetHeading) {
         cycle = 1;
     }
 
-    esc_servo_steer(way * OPEN_TURN_ANGLE);
+    esc_servo_steer(steeringAngle);
 
     do {
         if (BNO_get_eul(&angles) == -1) {

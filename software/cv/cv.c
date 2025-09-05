@@ -1,30 +1,6 @@
 #include "cv.h"
 #include "cv_config.h"
 
-CV_camerapipe CV_getcamera(const char *camera_name, const char *filters) {
-    char cmd[512];
-    if (filters && filters[0]) { // Use filters if provided.
-        snprintf(cmd, sizeof(cmd),
-                 "ffmpeg -f v4l2 -video_size %dx%d -i %s -vf \"%s\" -f rawvideo -pix_fmt rgb24 - 2>/dev/null", // Redirect stderr to /dev/null. This hides the error messages when closing the pipe.
-                 CV_FRAME_WIDTH, CV_FRAME_HEIGHT, camera_name, filters);
-    } else {
-        snprintf(cmd, sizeof(cmd),
-                 "ffmpeg -f v4l2 -video_size %dx%d -i %s -f rawvideo -pix_fmt rgb24 - 2>/dev/null", // Redirect stderr to /dev/null. This hides the error messages when closing the pipe.
-                 CV_FRAME_WIDTH, CV_FRAME_HEIGHT, camera_name);
-    }
-
-    CV_camerapipe pipe = popen(cmd, "r");
-
-    sleep(1); // Sleep for 1 second to allow the camera to initialise.
-
-    if (!pipe) {
-        fprintf(stderr, "CV Error - Failed to open camera: %s\n", camera_name);
-        return NULL;
-    }
-
-    return pipe;
-}
-
 unsigned char CV_clamp(int value) {
     if (value < 0) return 0;
     if (value > 255) return 255;
@@ -97,35 +73,49 @@ void CV_enhanceframe(CV_frame buffer, float contrast, int brightness) {
     }
 }
 
-int CV_getRGBframe(CV_frame buffer, const CV_camerapipe camera) {
-    size_t n = fread(buffer, 1, CV_FRAME_HEIGHT * CV_FRAME_WIDTH * 3, camera);
+int CV_captureRGBframe(CV_frame buffer, const char *camera_name, const char *filters) {
+    char cmd[512];
+    if (filters && filters[0]) {
+        snprintf(cmd, sizeof(cmd),
+                 "ffmpeg -f v4l2 -video_size %dx%d -i %s -vf \"%s\" "
+                 "-frames:v 1 -f rawvideo -pix_fmt rgb24 - 2>/dev/null",
+                 CV_FRAME_WIDTH, CV_FRAME_HEIGHT, camera_name, filters);
+    } else {
+        snprintf(cmd, sizeof(cmd),
+                 "ffmpeg -f v4l2 -video_size %dx%d -i %s "
+                 "-frames:v 1 -f rawvideo -pix_fmt rgb24 - 2>/dev/null",
+                 CV_FRAME_WIDTH, CV_FRAME_HEIGHT, camera_name);
+    }
+
+    FILE *pipe = popen(cmd, "r");
+    if (!pipe) {
+        fprintf(stderr, "CV Error - Failed to run ffmpeg for snapshot.\n");
+        return 0;
+    }
+
+    size_t n = fread(buffer, 1, CV_FRAME_HEIGHT * CV_FRAME_WIDTH * 3, pipe);
+    pclose(pipe);
+
     if (n != CV_FRAME_HEIGHT * CV_FRAME_WIDTH * 3) {
-        fprintf(stderr, "CV Error - Failed to read frame: got %zu bytes, expected %d.\n", n, CV_FRAME_HEIGHT * CV_FRAME_WIDTH * 3);
+        fprintf(stderr, "CV Error - Snapshot incomplete: got %zu bytes, expected %d.\n",
+                n, CV_FRAME_HEIGHT * CV_FRAME_WIDTH * 3);
         return 0;
     }
 
     return 1;
 }
 
-int CV_getHSVframe(CV_frame buffer, const CV_camerapipe camera) {
-    if (!CV_getRGBframe(buffer, camera)) {
-        return 0; // If reading the RGB frame fails, return 0.
+int CV_captureHSVframe(CV_frame buffer, const char *camera_name, const char *filters) {
+    if (!CV_captureRGBframe(buffer, camera_name, filters)) {
+        return 0;
     }
 
     CV_enhanceframe(buffer, CONTRAST, BRIGHTNESS);
 
-    // Convert each pixel from RGB to HSV.
     CV_FOREACH(x, y) {
-        CV_RGBtoHSV(buffer[y][x], buffer[y][x]); // Reuse the buffer for HSV values.
+        CV_RGBtoHSV(buffer[y][x], buffer[y][x]);
     }
-    return 1; // Return 1 to indicate success.
-}
-
-void CV_closecamera(const CV_camerapipe camera) {
-    if (camera) {
-        fflush(camera);
-        pclose(camera);
-    }
+    return 1;
 }
 
 CV_playerpipe CV_getplayer() {

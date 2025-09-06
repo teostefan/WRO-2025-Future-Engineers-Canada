@@ -1,1 +1,1 @@
-In this directory, the IronCAD design files as well as an assembly manual can be found.
+In this directory, the IronCAD design files (```WRO2025_final.ics```) as well as an assembly manual and BOM (```Assembly_Manual_and_BOM.pdf```) can be found. The diagrams in the assembly manual are detailed and small, so it is recommended to not have it printed. A PDF viewer should be used so that the document can be zoomed in.

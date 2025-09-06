@@ -1,0 +1,6 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "FS1603-5000-AL")(type "KiCad")(uri "${KIPRJMOD}/Parts/ul_FS1603-5000-AL/KiCADv6/2025-06-07_21-26-49.kicad_sym")(options "")(descr ""))
+  (lib (name "TPSM84338RCJR")(type "KiCad")(uri "${KIPRJMOD}/Parts/ul_TPSM84338RCJR/KiCADv6/2025-06-09_21-36-47.kicad_sym")(options "")(descr ""))
+  (lib (name "NCV8152MX330180TCG")(type "KiCad")(uri "${KIPRJMOD}/Parts/ul_NCV8152MX330180TCG/KiCADv6/2025-06-09_23-47-03.kicad_sym")(options "")(descr ""))
+)

@@ -4,21 +4,15 @@ The following repository contains the code and technical documentation regarding
 the robot created by the CarletonU-uOttawa joint team for the 2025 WRO Future
 Engineers competition.
 
-## Introduction to the problem
+![Robot Image](https://github.com/teostefan/WRO-2025-Future-Engineers-Canada/blob/main/media/robot_iso.jpg)
 
-To be completed.
+### Engineering Journal
 
-## Our solution
+The Engineering Journal has been formatted as a Git Wiki. It can be accessed **[here](https://github.com/teostefan/WRO-2025-Future-Engineers-Canada/wiki)**.
 
-To be completed.
+### Assembly Instructions
 
-### Chosen computing platform & programming language
-
-To be completed.
-
-### Basic hardwear design
-
-To be completed.
+A PDF containing a BOM and assembly instructions for the rbot can be found **[here](https://github.com/teostefan/WRO-2025-Future-Engineers-Canada/wiki/Mobility-Management#assembly-instructions-and-boms)**.
 
 ### Compiling and running the robot's firmware (Linux)
 

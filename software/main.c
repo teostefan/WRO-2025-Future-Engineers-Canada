@@ -52,9 +52,9 @@ int main() {
         printf("turn one distance: %d\n", turnOneDistance);
     }
 
-    turn(90, 0);
+    turn(100, 0);
 
-    sleep(1);
+    sleep(2);
 
     esc_brake();
 

@@ -134,12 +134,13 @@
 #define GREEN_RED 4
 
 #define TURN_RANGE 30
-#define STOP_DISTANCE_RANGE 200
-#define HUG_DISTANCE_RANGE 50
+#define STOP_DISTANCE_RANGE 500
+#define HUG_DISTANCE_RANGE 100
 
 int startDirection;
 int direction;
 int map[4];
+int firstObstacle;
 int stretch;
 struct PID_Controller pid = {KP, KI, KD, 0.0f, 0.0f};
 struct CV_CameraData cv_data = {0, 0, 0, 0};
@@ -149,6 +150,7 @@ int rightDistance;
 int leftDistance;
 int hugDistance;
 int stopDistance;
+int safetyDistance;
 int rightCount;
 int leftCount;
 int distances[10];

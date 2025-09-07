@@ -3,24 +3,27 @@
 int look() {
     CV_frame redframe;
     CV_frame greenframe;
-    CV_mask redmask;
-    CV_mask greenmask;
-    CV_bounding_box_list redbboxes = {0};
-    CV_bounding_box_list greenbboxes = {0};
 
     int counter = 0;
-    int obstacles;
+    int obstacles = -1;
 
     do {
         CV_camerapipe camera = CV_getcamera("/dev/video0", "gblur=0.5");
         if (!camera) continue;
+
+        CV_mask redmask;
+        CV_mask greenmask;
+
+        CV_bounding_box_list redbboxes = {0};
+        CV_bounding_box_list greenbboxes = {0};
 
         if (!CV_getHSVframe(greenframe, camera)) continue; // Load an HSV frame for detecting green obstacles.
         if (!CV_getHSVframe(redframe, camera)) continue;   // Load an HSV frame for detecting red obstacles.
 
         // Detect green objects
         CV_chromakey(greenmask, greenframe, H_HM_GREEN, S_HM_GREEN, V_HM_GREEN);
-        CV_masktracker(&greenbboxes, greenmask, 50);
+        CV_masktracker(&greenbboxes, greenmask, 15);
+
         CV_bounding_box *biggestgreenbox = &greenbboxes.boxes[0];
         for (size_t i = 0; i < greenbboxes.count; i++) {
             CV_bounding_box *box = &greenbboxes.boxes[i];
@@ -31,10 +34,12 @@ int look() {
                 biggestgreenbox->y[1] = box->y[1];
             }
         }
+        printf("Green box: x=[%d, %d], y=[%d, %d]\n", biggestgreenbox->x[0], biggestgreenbox->x[1], biggestgreenbox->y[0], biggestgreenbox->y[1]);
 
         // Detect red objects
         CV_chromakey(redmask, redframe, H_HM_RED, S_HM_RED, V_HM_RED);
-        CV_masktracker(&redbboxes, redmask, 50);
+        CV_masktracker(&redbboxes, redmask, 15);
+
         CV_bounding_box *biggestredbox = &redbboxes.boxes[0];
         for (size_t i = 0; i < redbboxes.count; i++) {
             CV_bounding_box *box = &redbboxes.boxes[i];
@@ -45,6 +50,7 @@ int look() {
                 biggestredbox->y[1] = box->y[1];
             }
         }
+        printf("Red box: x=[%d, %d], y=[%d, %d]\n", biggestredbox->x[0], biggestredbox->x[1], biggestredbox->y[0], biggestredbox->y[1]);
 
         if (biggestredbox->y[0] == 0 && biggestredbox->y[1] == 0 && biggestgreenbox->y[0] == 0 && biggestgreenbox->y[1] == 0) {
             counter--;
@@ -64,8 +70,67 @@ int look() {
     return obstacles;
 }
 
-int blind_go(int speed, float neutralHeading, int hugMux, int hugTarget, int stopMux, int stopTarget, int way) {
+int open_go(int speed, float neutralHeading, int stopTarget) {
     float targetHeading = neutralHeading + zeroHeading;
+    if (targetHeading < 0) {
+        targetHeading += 360;
+    }
+    if (targetHeading > 360) {
+        targetHeading -= 360;
+    }
+
+    esc_drive((speed > 0), speed);
+
+    do {
+        i2cmux_switch(FRONT_MUX);
+        usleep(50000); // 50ms
+        stopDistance = tofReadDistance();
+        usleep(50000); // 50ms
+        i2cmux_switch(LEFT_MUX);
+        usleep(50000); // 50ms
+        hugDistance = tofReadDistance();
+
+        if (BNO_get_eul(&angles) == -1) {
+            printf("An error occurred.");
+        }
+
+        if (speed > 0) {
+            error = (int)(0.5 * (targetHeading - angles.eul_head));
+        } else {
+            error = (int)(0.5 * (angles.eul_head - targetHeading));
+        }
+
+        if (error > 90) {
+            error -= 180;
+        } else if (error < -90) {
+            error += 180;
+        }
+        if (error > 30) {
+            error = 30;
+        } else if (error < -30) {
+            error = -30;
+        }
+
+        if (hugDistance < (400 - HUG_DISTANCE_RANGE)) {
+            error += 5;
+        } else if (hugDistance > (400 + HUG_DISTANCE_RANGE) && hugDistance < 4000) {
+            error -= 5;
+        }
+
+        esc_servo_steer(error);
+
+        printf("stop distance: %d", stopDistance);
+    } while ((stopDistance > stopTarget || error > 15 || error < -15) && stopDistance > 400);
+
+    return 0;
+}
+
+int blind_go(int speed, float neutralHeading, int hugMux, int hugTarget, int stopMux, int stopTarget, int safetyMux, int safetyTarget, int way) {
+    int count = 0;
+    float targetHeading = neutralHeading + zeroHeading;
+    if (targetHeading < 0) {
+        targetHeading += 360;
+    }
     if (targetHeading > 360) {
         targetHeading -= 360;
     }
@@ -74,13 +139,17 @@ int blind_go(int speed, float neutralHeading, int hugMux, int hugTarget, int sto
 
     do {
         i2cmux_switch(stopMux);
-        usleep(50000); // 50ms
         stopDistance = tofReadDistance();
+        i2cmux_switch(safetyMux);
+        safetyDistance = tofReadDistance();
+        if (stopDistance > stopTarget && safetyDistance > safetyTarget) {
+            count++;
+        } else {
+            count = 0;
+        }
 
         if (hugMux >= 0 && hugTarget >= 0) {
-            usleep(50000); // 50ms
             i2cmux_switch(hugMux);
-            usleep(50000); // 50ms
             hugDistance = tofReadDistance();
         }
 
@@ -108,15 +177,15 @@ int blind_go(int speed, float neutralHeading, int hugMux, int hugTarget, int sto
         if (hugMux >= 0 && hugTarget >= 0) {
             if (hugDistance < (hugTarget - HUG_DISTANCE_RANGE)) {
                 if (hugMux == RIGHT_MUX) {
-                    error -= 5;
+                    error -= 10;
                 } else {
-                    error += 5;
+                    error += 10;
                 }
-            } else if (hugDistance > (hugTarget + HUG_DISTANCE_RANGE) && rightDistance < 4000) {
+            } else if (hugDistance > (hugTarget + HUG_DISTANCE_RANGE) && hugDistance < 4000) {
                 if (hugMux == RIGHT_MUX) {
-                    error += 5;
+                    error += 10;
                 } else {
-                    error -= 5;
+                    error -= 10;
                 }
             }
         }
@@ -124,15 +193,17 @@ int blind_go(int speed, float neutralHeading, int hugMux, int hugTarget, int sto
         esc_servo_steer(error);
 
         printf("stop distance: %d", stopDistance);
-
-        usleep(50000); // 50ms
-    } while (((stopDistance < stopTarget || stopDistance > 4000) && way) || ((stopDistance > stopTarget || stopDistance < 400) && !way));
+    } while ((count < 2 && way) || ((stopDistance > stopTarget) && !way));
 
     return 0;
 }
 
 int go(int speed, float neutralHeading, int hugMux, int hugTarget, int stopMux, int stopTarget) {
     float targetHeading = neutralHeading + zeroHeading;
+    int count = 0;
+    if (targetHeading < 0) {
+        targetHeading += 360;
+    }
     if (targetHeading > 360) {
         targetHeading -= 360;
     }
@@ -151,6 +222,14 @@ int go(int speed, float neutralHeading, int hugMux, int hugTarget, int stopMux, 
         i2cmux_switch(stopMux);
         usleep(50000); // 50ms
         stopDistance = tofReadDistance();
+
+        i2cmux_switch(RIGHT_MUX);
+        usleep(50000); // 50ms
+        if (tofReadDistance() > 4000) {
+            count++;
+        } else {
+            count = 0;
+        }
 
         if (hugMux >= 0 && hugTarget >= 0) {
             usleep(50000); // 50ms
@@ -204,13 +283,19 @@ int go(int speed, float neutralHeading, int hugMux, int hugTarget, int stopMux, 
         printf("stop distance: %d", stopDistance);
 
         usleep(50000); // 50ms
-    } while (!(stopDistance > minRange && stopDistance < maxRange));
+    } while (!(stopDistance > minRange && stopDistance < maxRange) && count < 5);
 
     return 0;
 }
 
 int turn(int steeringAngle, float targetHeading) {
     int cycle = 0;
+    if (targetHeading < 0) {
+        targetHeading += 360;
+    }
+    if (targetHeading > 360) {
+        targetHeading -= 360;
+    }
     int maxRange = targetHeading + TURN_RANGE;
     if (maxRange > 360) {
         maxRange -= 360;

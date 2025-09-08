@@ -49,11 +49,11 @@ int main() {
         // Detect red objects
         CV_chromakey(redmask, redframe, H_HM_RED, S_HM_RED, V_HM_RED);
         CV_masktracker(&redbboxes, redmask, 15);
-        /*
+
         if (!CV_getRGBframe(redframe, camera)) return 0;               // Load an RGB frame for display.
         CV_drawbb(redframe, &redbboxes, (unsigned char[]){255, 0, 0}); // Draw bounding boxes in red.
         CV_playframe(player, redframe);                                // Play the frame.
-        */
+
         CV_bounding_box *biggestredbox = &redbboxes.boxes[0];
         for (size_t i = 0; i < redbboxes.count; i++) {
             CV_bounding_box *box = &redbboxes.boxes[i];

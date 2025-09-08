@@ -1,421 +1,80 @@
 #include "globals.h"
 
-/* parallel park on the left side
+int look() {
+    CV_frame redframe;
+    CV_frame greenframe;
 
-    esc_drive(0, 125);
-
-    do {
-        i2cmux_switch(FRONT_MUX);
-        usleep(50000); // 50ms
-        frontDistance = tofReadDistance();
-        usleep(50000); // 50ms
-        i2cmux_switch(LEFT_MUX);
-        usleep(50000); // 50ms
-        leftDistance = tofReadDistance();
-
-        error = (int)(0.5 * (zeroHeading - angles.eul_head));
-        if (error > 30) {
-            error = 30;
-        } else if (error < -30) {
-            error = -30;
-        }
-
-        if (leftDistance < 450) {
-            error += 5;
-        } else if (leftDistance > 550 && leftDistance < 4000) {
-            error -= 5;
-        }
-
-        esc_servo_steer(error);
-
-        trueHeading = angles.eul_head - zeroHeading;
-
-        if (trueHeading < 0) {
-            trueHeading += 360;
-        }
-
-        usleep(50000); // 50ms
-    } while (frontDistance > 4000 || frontDistance < 600);
-
-    esc_servo_steer(-50);
+    int counter = 0;
+    int obstacles = -1;
 
     do {
-        if (BNO_get_eul(&angles) == -1) {
-            printf("An error occurred.");
+        CV_camerapipe camera = CV_getcamera("/dev/video0", "gblur=0.5");
+        if (!camera) continue;
+
+        CV_mask redmask;
+        CV_mask greenmask;
+
+        CV_bounding_box_list redbboxes = {0};
+        CV_bounding_box_list greenbboxes = {0};
+
+        if (!CV_getHSVframe(greenframe, camera)) continue; // Load an HSV frame for detecting green obstacles.
+        if (!CV_getHSVframe(redframe, camera)) continue;   // Load an HSV frame for detecting red obstacles.
+
+        // Detect green objects
+        CV_chromakey(greenmask, greenframe, H_HM_GREEN, S_HM_GREEN, V_HM_GREEN);
+        CV_masktracker(&greenbboxes, greenmask, 15);
+
+        CV_bounding_box *biggestgreenbox = &greenbboxes.boxes[0];
+        for (size_t i = 0; i < greenbboxes.count; i++) {
+            CV_bounding_box *box = &greenbboxes.boxes[i];
+            if (((box->x[1] - box->x[0]) * (box->y[1] - box->y[0])) >= ((biggestgreenbox->x[1] - biggestgreenbox->x[0]) * (biggestgreenbox->y[1] - biggestgreenbox->y[0]))) {
+                biggestgreenbox->x[0] = box->x[0];
+                biggestgreenbox->x[1] = box->x[1];
+                biggestgreenbox->y[0] = box->y[0];
+                biggestgreenbox->y[1] = box->y[1];
+            }
         }
-        usleep(50000); // 50ms
+        printf("Green box: x=[%d, %d], y=[%d, %d]\n", biggestgreenbox->x[0], biggestgreenbox->x[1], biggestgreenbox->y[0], biggestgreenbox->y[1]);
 
-        trueHeading = angles.eul_head - zeroHeading;
-        if (trueHeading < 0) {
-            trueHeading += 360;
+        // Detect red objects
+        CV_chromakey(redmask, redframe, H_HM_RED, S_HM_RED, V_HM_RED);
+        CV_masktracker(&redbboxes, redmask, 15);
+
+        CV_bounding_box *biggestredbox = &redbboxes.boxes[0];
+        for (size_t i = 0; i < redbboxes.count; i++) {
+            CV_bounding_box *box = &redbboxes.boxes[i];
+            if (((box->x[1] - box->x[0]) * (box->y[1] - box->y[0])) >= ((biggestredbox->x[1] - biggestredbox->x[0]) * (biggestredbox->y[1] - biggestredbox->y[0]))) {
+                biggestredbox->x[0] = box->x[0];
+                biggestredbox->x[1] = box->x[1];
+                biggestredbox->y[0] = box->y[0];
+                biggestredbox->y[1] = box->y[1];
+            }
         }
-        printf(" first turn Heading = %f degrees ", trueHeading);
-    } while (trueHeading < 75 || trueHeading > 180);
+        printf("Red box: x=[%d, %d], y=[%d, %d]\n", biggestredbox->x[0], biggestredbox->x[1], biggestredbox->y[0], biggestredbox->y[1]);
 
-    esc_servo_steer(0);
-
-    do {
-        i2cmux_switch(REAR_MUX);
-        usleep(50000); // 50ms
-        rearDistance = tofReadDistance();
-    } while (rearDistance > 350);
-
-    esc_servo_steer(50);
-
-    // Turn until turn completed
-    do {
-        i2cmux_switch(REAR_MUX);
-        usleep(50000); // 50ms
-        rearDistance = tofReadDistance();
-    } while (rearDistance > 100);
-
-    esc_brake();
-
-    esc_servo_steer(-50);
-
-    esc_drive(1, 110);
-
-    // Turn until turn completed
-    do {
-        if (BNO_get_eul(&angles) == -1) {
-            printf("An error occurred.");
+        if (biggestredbox->y[0] == 0 && biggestredbox->y[1] == 0 && biggestgreenbox->y[0] == 0 && biggestgreenbox->y[1] == 0) {
+            counter--;
+        } else if (biggestredbox->y[0] != 0 && biggestredbox->y[1] != 0 && biggestgreenbox->y[0] == 0 && biggestgreenbox->y[1] == 0) {
+            obstacles = RED_RED;
+        } else if (biggestredbox->y[0] == 0 && biggestredbox->y[1] == 0 && biggestgreenbox->y[0] != 0 && biggestgreenbox->y[1] != 0) {
+            obstacles = GREEN_GREEN;
+        } else if ((biggestredbox->y[0] + (biggestredbox->y[1] - biggestredbox->y[0]) / 2) > (biggestgreenbox->y[0] + (biggestgreenbox->y[1] - biggestgreenbox->y[0]) / 2)) {
+            obstacles = RED_GREEN;
+        } else {
+            obstacles = GREEN_RED;
         }
-        usleep(50000); // 50ms
 
-        trueHeading = angles.eul_head - zeroHeading;
-        if (trueHeading < 0) {
-            trueHeading += 360;
-        }
-        printf("Heading = %f degrees ", trueHeading);
-    } while (trueHeading < 180 || trueHeading > 360);
+        CV_closecamera(camera);
+    } while (counter++ < 1);
 
-    */
+    return obstacles;
+}
 
-/* parallel park on the right side
-
-esc_drive(0, 125);
-
-do {
-    i2cmux_switch(FRONT_MUX);
-    usleep(50000); // 50ms
-    frontDistance = tofReadDistance();
-    usleep(50000); // 50ms
-    i2cmux_switch(RIGHT_MUX);
-    usleep(50000); // 50ms
-    rightDistance = tofReadDistance();
-
-    error = (int)(0.5 * (zeroHeading - angles.eul_head));
-    if (error > 30) {
-        error = 30;
-    } else if (error < -30) {
-        error = -30;
-    }
-
-    if (rightDistance < 450) {
-        error -= 5;
-    } else if (rightDistance > 550 && rightDistance < 4000) {
-        error += 5;
-    }
-
-    esc_servo_steer(error);
-
-    trueHeading = angles.eul_head - zeroHeading;
-
-    if (trueHeading < 0) {
-        trueHeading += 360;
-    }
-
-    usleep(50000); // 50ms
-} while (frontDistance > 4000 || frontDistance < 650);
-
-esc_servo_steer(50);
-
-do {
-    if (BNO_get_eul(&angles) == -1) {
-        printf("An error occurred.");
-    }
-    usleep(50000); // 50ms
-
-    trueHeading = angles.eul_head - zeroHeading;
-    if (trueHeading < 0) {
-        trueHeading += 360;
-    }
-    printf("Heading = %f degrees ", trueHeading);
-} while (trueHeading < 180 || trueHeading > 285);
-
-esc_servo_steer(0);
-
-do {
-    i2cmux_switch(REAR_MUX);
-    usleep(50000); // 50ms
-    rearDistance = tofReadDistance();
-} while (rearDistance > 300);
-
-esc_servo_steer(-50);
-
-// Turn until turn completed
-do {
-    i2cmux_switch(REAR_MUX);
-    usleep(50000); // 50ms
-    rearDistance = tofReadDistance();
-} while (rearDistance > 100);
-
-esc_brake();
-
-esc_servo_steer(50);
-
-esc_drive(1, 125);
-
-// Turn until turn completed
-do {
-    if (BNO_get_eul(&angles) == -1) {
-        printf("An error occurred.");
-    }
-    usleep(50000); // 50ms
-
-    trueHeading = angles.eul_head - zeroHeading;
-    if (trueHeading < 0) {
-        trueHeading += 360;
-    }
-    printf("Heading = %f degrees ", trueHeading);
-} while ((trueHeading > 180 && trueHeading < 355) || trueHeading > 360);
-
-*/
-
-/* pull out from the left side
-
-esc_servo_steer(50);
-
-// Turn until turn completed
-do {
-    if (BNO_get_eul(&angles) == -1) {
-        printf("An error occurred.");
-    }
-    usleep(50000); // 50ms
-
-    trueHeading = angles.eul_head - zeroHeading;
-    if (trueHeading < 0) {
-        trueHeading += 360;
-    }
-    printf("Heading = %f degrees ", trueHeading);
-} while (trueHeading < 70 || trueHeading > 180);
-
-esc_servo_steer(0);
-
-do {
-    i2cmux_switch(FRONT_MUX);
-    usleep(50000); // 50ms
-    frontDistance = tofReadDistance();
-} while (frontDistance > 500 || frontDistance < 100);
-
-esc_servo_steer(-50);
-
-// Turn until turn completed
-do {
-    if (BNO_get_eul(&angles) == -1) {
-        printf("An error occurred.");
-    }
-    usleep(50000); // 50ms
-
-    trueHeading = angles.eul_head - zeroHeading;
-    if (trueHeading < 0) {
-        trueHeading += 360;
-    }
-    printf("Heading = %f degrees ", trueHeading);
-} while (trueHeading > 20);
-
-esc_drive(0, 100);
-
-esc_servo_steer(50);
-
-// Turn until turn completed
-do {
-    if (BNO_get_eul(&angles) == -1) {
-        printf("An error occurred.");
-    }
-    usleep(50000); // 50ms
-
-    trueHeading = angles.eul_head - zeroHeading;
-    if (trueHeading < 0) {
-        trueHeading += 360;
-    }
-    printf("Heading = %f degrees ", trueHeading);
-} while (trueHeading > 10);
-
-esc_servo_steer(0);
-
-*/
-
-/* pull out from the right side
-
-esc_servo_steer(-50);
-
-// Turn until turn completed
-do {
-    if (BNO_get_eul(&angles) == -1) {
-        printf("An error occurred.");
-    }
-    usleep(50000); // 50ms
-
-    trueHeading = angles.eul_head - zeroHeading;
-    if (trueHeading < 0) {
-        trueHeading += 360;
-    }
-    printf("Heading = %f degrees ", trueHeading);
-} while (trueHeading < 180 || trueHeading > 290);
-
-esc_servo_steer(0);
-
-do {
-    i2cmux_switch(FRONT_MUX);
-    usleep(50000); // 50ms
-    frontDistance = tofReadDistance();
-} while (frontDistance > 500 || frontDistance < 100);
-
-esc_servo_steer(50);
-
-// Turn until turn completed
-do {
-    if (BNO_get_eul(&angles) == -1) {
-        printf("An error occurred.");
-    }
-    usleep(50000); // 50ms
-
-    trueHeading = angles.eul_head - zeroHeading;
-    if (trueHeading < 0) {
-        trueHeading += 360;
-    }
-    printf("Heading = %f degrees ", trueHeading);
-} while (trueHeading < 330 || trueHeading > 360);
-
-esc_drive(0, 100);
-
-esc_servo_steer(-50);
-
-// Turn until turn completed
-do {
-    if (BNO_get_eul(&angles) == -1) {
-        printf("An error occurred.");
-    }
-    usleep(50000); // 50ms
-
-    trueHeading = angles.eul_head - zeroHeading;
-    if (trueHeading < 0) {
-        trueHeading += 360;
-    }
-    printf("Heading = %f degrees ", trueHeading);
-} while ((trueHeading > 50 && trueHeading < 350) || trueHeading > 360);
-
-esc_servo_steer(0);
-
-*/
-
-/* obstacle tight left
-
-do {
-    i2cmux_switch(FRONT_MUX);
-    usleep(50000); // 50ms
-    frontDistance = tofReadDistance();
-} while (frontDistance > 1000 || frontDistance < 300);
-
-esc_servo_steer(OPEN_TURN_ANGLE);
-
-// Turn until turn completed
-do {
-    if (BNO_get_eul(&angles) == -1) {
-        printf("An error occurred.");
-    }
-    usleep(50000); // 50ms
-
-    trueHeading = angles.eul_head - zeroHeading;
-    if (trueHeading < 0) {
-        trueHeading += 360;
-    }
-    printf("Heading = %f degrees ", trueHeading);
-} while (trueHeading < 70 || trueHeading > 180);
-
-esc_servo_steer(0);
-
-do {
-    i2cmux_switch(FRONT_MUX);
-    usleep(50000); // 50ms
-    frontDistance = tofReadDistance();
-} while (frontDistance > 400 || frontDistance < 50);
-
-esc_servo_steer(-OPEN_TURN_ANGLE);
-
-// Turn until turn completed
-do {
-    if (BNO_get_eul(&angles) == -1) {
-        printf("An error occurred.");
-    }
-    usleep(50000); // 50ms
-
-    trueHeading = angles.eul_head - zeroHeading;
-    if (trueHeading < 0) {
-        trueHeading += 360;
-    }
-    printf("Heading = %f degrees ", trueHeading);
-} while (trueHeading < 180 || trueHeading > 310);
-
-esc_servo_steer(0);
-
-*/
-
-/* obstacle tight right
-
-do {
-    i2cmux_switch(FRONT_MUX);
-    usleep(50000); // 50ms
-    frontDistance = tofReadDistance();
-} while (frontDistance > 1000 || frontDistance < 300);
-
-esc_servo_steer(-OPEN_TURN_ANGLE);
-
-// Turn until turn completed
-do {
-    if (BNO_get_eul(&angles) == -1) {
-        printf("An error occurred.");
-    }
-    usleep(50000); // 50ms
-
-    trueHeading = angles.eul_head - zeroHeading;
-    if (trueHeading < 0) {
-        trueHeading += 360;
-    }
-    printf("Heading = %f degrees ", trueHeading);
-} while (trueHeading < 180 || trueHeading > 320);
-
-esc_servo_steer(0);
-
-do {
-    i2cmux_switch(FRONT_MUX);
-    usleep(50000); // 50ms
-    frontDistance = tofReadDistance();
-} while (frontDistance > 400 || frontDistance < 50);
-
-esc_servo_steer(OPEN_TURN_ANGLE);
-
-// Turn until turn completed
-do {
-    if (BNO_get_eul(&angles) == -1) {
-        printf("An error occurred.");
-    }
-    usleep(50000); // 50ms
-
-    trueHeading = angles.eul_head - zeroHeading;
-    if (trueHeading < 0) {
-        trueHeading += 360;
-    }
-    printf("Heading = %f degrees ", trueHeading);
-} while (trueHeading < 70 || trueHeading > 180);
-
-esc_servo_steer(0);
-
-*/
-
-int blind_go(int speed, float neutralHeading, int hugMux, int hugTarget, int stopMux, int stopTarget, int way) {
+int loose_go(int speed, float neutralHeading, int hugMux, int hugTarget, int stopMux, int stopTarget, int way) {
     float targetHeading = neutralHeading + zeroHeading;
+    if (targetHeading < 0) {
+        targetHeading += 360;
+    }
     if (targetHeading > 360) {
         targetHeading -= 360;
     }
@@ -424,13 +83,17 @@ int blind_go(int speed, float neutralHeading, int hugMux, int hugTarget, int sto
 
     do {
         i2cmux_switch(stopMux);
-        usleep(50000); // 50ms
         stopDistance = tofReadDistance();
+        i2cmux_switch(safetyMux);
+        safetyDistance = tofReadDistance();
+        if (stopDistance > stopTarget && safetyDistance > safetyTarget) {
+            count++;
+        } else {
+            count = 0;
+        }
 
         if (hugMux >= 0 && hugTarget >= 0) {
-            usleep(50000); // 50ms
             i2cmux_switch(hugMux);
-            usleep(50000); // 50ms
             hugDistance = tofReadDistance();
         }
 
@@ -458,15 +121,15 @@ int blind_go(int speed, float neutralHeading, int hugMux, int hugTarget, int sto
         if (hugMux >= 0 && hugTarget >= 0) {
             if (hugDistance < (hugTarget - HUG_DISTANCE_RANGE)) {
                 if (hugMux == RIGHT_MUX) {
-                    error -= 5;
+                    error -= 10;
                 } else {
-                    error += 5;
+                    error += 10;
                 }
-            } else if (hugDistance > (hugTarget + HUG_DISTANCE_RANGE) && rightDistance < 4000) {
+            } else if (hugDistance > (hugTarget + HUG_DISTANCE_RANGE) && hugDistance < 4000) {
                 if (hugMux == RIGHT_MUX) {
-                    error += 5;
+                    error += 10;
                 } else {
-                    error -= 5;
+                    error -= 10;
                 }
             }
         }
@@ -474,15 +137,17 @@ int blind_go(int speed, float neutralHeading, int hugMux, int hugTarget, int sto
         esc_servo_steer(error);
 
         printf("stop distance: %d", stopDistance);
-
-        usleep(50000); // 50ms
-    } while (((stopDistance < stopTarget || stopDistance > 4000) && way) || ((stopDistance > stopTarget || stopDistance < 400) && !way));
+    } while ((count < 2 && way) || ((stopDistance > stopTarget || safetyDistance < safetyTarget) && !way));
 
     return 0;
 }
 
 int go(int speed, float neutralHeading, int hugMux, int hugTarget, int stopMux, int stopTarget) {
     float targetHeading = neutralHeading + zeroHeading;
+    int count = 0;
+    if (targetHeading < 0) {
+        targetHeading += 360;
+    }
     if (targetHeading > 360) {
         targetHeading -= 360;
     }
@@ -501,6 +166,14 @@ int go(int speed, float neutralHeading, int hugMux, int hugTarget, int stopMux, 
         i2cmux_switch(stopMux);
         usleep(50000); // 50ms
         stopDistance = tofReadDistance();
+
+        i2cmux_switch(RIGHT_MUX);
+        usleep(50000); // 50ms
+        if (tofReadDistance() > 4000) {
+            count++;
+        } else {
+            count = 0;
+        }
 
         if (hugMux >= 0 && hugTarget >= 0) {
             usleep(50000); // 50ms
@@ -554,13 +227,19 @@ int go(int speed, float neutralHeading, int hugMux, int hugTarget, int stopMux, 
         printf("stop distance: %d", stopDistance);
 
         usleep(50000); // 50ms
-    } while (!(stopDistance > minRange && stopDistance < maxRange));
+    } while (!(stopDistance > minRange && stopDistance < maxRange) && count < 5);
 
     return 0;
 }
 
-int turn(int way, float targetHeading) {
+int turn(int steeringAngle, float targetHeading) {
     int cycle = 0;
+    if (targetHeading < 0) {
+        targetHeading += 360;
+    }
+    if (targetHeading > 360) {
+        targetHeading -= 360;
+    }
     int maxRange = targetHeading + TURN_RANGE;
     if (maxRange > 360) {
         maxRange -= 360;
@@ -572,7 +251,7 @@ int turn(int way, float targetHeading) {
         cycle = 1;
     }
 
-    esc_servo_steer(way * OPEN_TURN_ANGLE);
+    esc_servo_steer(steeringAngle);
 
     do {
         if (BNO_get_eul(&angles) == -1) {
@@ -590,4 +269,359 @@ int turn(int way, float targetHeading) {
     esc_servo_steer(0);
 
     return 0;
+}
+
+int in_in() {
+    if (direction == CLOCKWISE) {
+        blind_go(SLOW_SPEED, (direction * ((stretch * 90) % 360)), RIGHT_MUX, 200, RIGHT_MUX, 800, LEFT_MUX, 0, 1);
+    } else if (direction == COUNTERCLOCKWISE) {
+        blind_go(SLOW_SPEED, (direction * ((stretch * 90) % 360)), LEFT_MUX, 200, LEFT_MUX, 800, RIGHT_MUX, 0, 1);
+    }
+}
+
+int in_out() {
+    if (direction == CLOCKWISE) {
+        turn(-45, 300 + (direction * ((stretch * 90) % 360)));
+
+        go(SLOW_SPEED, 300 + (direction * ((stretch * 90) % 360)), -1, -1, FRONT_MUX, 200);
+
+        turn(45, 15 + (direction * ((stretch * 90) % 360)));
+
+        blind_go(MEDIUM_SPEED, (direction * ((stretch * 90) % 360)), LEFT_MUX, 200, FRONT_MUX, 500, LEFT_MUX, 0, 0);
+    } else if (direction == COUNTERCLOCKWISE) {
+        turn(45, 60 + (direction * ((stretch * 90) % 360)));
+
+        go(SLOW_SPEED, 60 + (direction * ((stretch * 90) % 360)), -1, -1, FRONT_MUX, 200);
+
+        turn(-45, 345 + (direction * ((stretch * 90) % 360)));
+
+        blind_go(MEDIUM_SPEED, (direction * ((stretch * 90) % 360)), RIGHT_MUX, 200, FRONT_MUX, 500, RIGHT_MUX, 0, 0);
+    }
+}
+
+int out_in() {
+    if (direction == CLOCKWISE) {
+        turn(45, 60 + (direction * ((stretch * 90) % 360)));
+
+        go(SLOW_SPEED, 60 + (direction * ((stretch * 90) % 360)), -1, -1, FRONT_MUX, 200);
+
+        turn(-45, 345 + (direction * ((stretch * 90) % 360)));
+
+        blind_go(MEDIUM_SPEED, (direction * ((stretch * 90) % 360)), RIGHT_MUX, 200, FRONT_MUX, 500, RIGHT_MUX, 0, 0);
+    } else if (direction == COUNTERCLOCKWISE) {
+        turn(-45, 300 + (direction * ((stretch * 90) % 360)));
+
+        go(SLOW_SPEED, 300 + (direction * ((stretch * 90) % 360)), -1, -1, FRONT_MUX, 200);
+
+        turn(45, 15 + (direction * ((stretch * 90) % 360)));
+
+        blind_go(MEDIUM_SPEED, (direction * ((stretch * 90) % 360)), LEFT_MUX, 200, FRONT_MUX, 500, LEFT_MUX, 0, 0);
+    }
+}
+
+int out_out() {
+    if (direction == CLOCKWISE) {
+        blind_go(SLOW_SPEED, (direction * ((stretch * 90) % 360)), LEFT_MUX, 200, FRONT_MUX, 800, LEFT_MUX, 0, 0);
+    } else if (direction == COUNTERCLOCKWISE) {
+        blind_go(SLOW_SPEED, (direction * ((stretch * 90) % 360)), RIGHT_MUX, 200, FRONT_MUX, 800, RIGHT_MUX, 0, 0);
+    }
+}
+
+int in_in_turn() {
+    if (direction == CLOCKWISE) {
+        esc_drive(1, SLOW_SPEED);
+
+        turn(50, 90 + (direction * ((stretch * 90) % 360)));
+
+        esc_drive(1, MEDIUM_SPEED);
+
+        sleep(1);
+    } else if (direction == COUNTERCLOCKWISE) {
+        esc_drive(1, SLOW_SPEED);
+
+        turn(-50, 270 + (direction * ((stretch * 90) % 360)));
+
+        esc_drive(1, MEDIUM_SPEED);
+
+        sleep(1);
+    }
+}
+
+int in_out_turn() {
+    if (direction == CLOCKWISE) {
+        blind_go(SLOW_SPEED, (direction * ((stretch * 90) % 360)), -1, -1, FRONT_MUX, 300, LEFT_MUX, 0, 0);
+
+        turn(45, 90 + (direction * ((stretch * 90) % 360)));
+    } else if (direction == COUNTERCLOCKWISE) {
+        blind_go(SLOW_SPEED, (direction * ((stretch * 90) % 360)), -1, -1, FRONT_MUX, 300, RIGHT_MUX, 0, 0);
+
+        turn(-45, 270 + (direction * ((stretch * 90) % 360)));
+    }
+}
+
+int out_in_turn() {
+    if (direction == CLOCKWISE) {
+        turn(45, 60 + (direction * ((stretch * 90) % 360)));
+
+        go(SLOW_SPEED, 60 + (direction * ((stretch * 90) % 360)), -1, -1, FRONT_MUX, 175);
+
+        turn(45, 350 + (direction * ((stretch * 90) % 360)));
+    } else if (direction == COUNTERCLOCKWISE) {
+        turn(-45, 300 + (direction * ((stretch * 90) % 360)));
+
+        go(SLOW_SPEED, 300 + (direction * ((stretch * 90) % 360)), -1, -1, FRONT_MUX, 175);
+
+        turn(45, 10 + (direction * ((stretch * 90) % 360)));
+    }
+}
+
+int out_out_turn() {
+    if (direction == CLOCKWISE) {
+        turn(45, 90 + (direction * ((stretch * 90) % 360)));
+    } else if (direction == COUNTERCLOCKWISE) {
+        turn(-45, 270 + (direction * ((stretch * 90) % 360)));
+    }
+}
+
+int in_blind_turn() {
+    if (direction == CLOCKWISE) {
+        turn(-45, 270 + (direction * ((stretch * 90) % 360)));
+
+        go(MEDIUM_SPEED, 230 + (direction * ((stretch * 90) % 360)), -1, -1, FRONT_MUX, 300);
+
+        turn(50, 120 + (direction * ((stretch * 90) % 360)));
+
+        esc_brake();
+
+        map[stretch] = look();
+
+    } else if (direction == COUNTERCLOCKWISE) {
+        turn(45, 90 + (direction * ((stretch * 90) % 360)));
+
+        go(MEDIUM_SPEED, 130 + (direction * ((stretch * 90) % 360)), -1, -1, FRONT_MUX, 300);
+
+        turn(-50, 240 + (direction * ((stretch * 90) % 360)));
+
+        esc_brake();
+
+        map[stretch] = look();
+    }
+}
+
+int out_blind_turn() {
+    if (direction == CLOCKWISE) {
+        turn(45, 190 + (direction * ((stretch * 90) % 360)));
+
+        esc_brake();
+
+        map[stretch] = look();
+    } else if (direction == COUNTERCLOCKWISE) {
+        turn(-45, 170 + (direction * ((stretch * 90) % 360)));
+
+        esc_brake();
+
+        map[stretch] = look();
+    }
+}
+
+int pull_out() {
+    if (direction == CLOCKWISE) {
+        esc_drive(1, MEDIUM_SPEED);
+
+        turn(50, 90 + (direction * ((stretch * 90) % 360)));
+
+        esc_brake();
+
+        int firstObstacle = look();
+
+        if (firstObstacle == GREEN_GREEN || firstObstacle == GREEN_RED) {
+            esc_drive(1, MEDIUM_SPEED);
+
+            turn(45, 0 + (direction * ((stretch * 90) % 360)));
+
+            go(MEDIUM_SPEED, 0 + (direction * ((stretch * 90) % 360)), -1, -1, FRONT_MUX, 200);
+        } else {
+            esc_drive(1, MEDIUM_SPEED);
+
+            turn(-45, 120 + (direction * ((stretch * 90) % 360)));
+
+            go(MEDIUM_SPEED, 90 + (direction * ((stretch * 90) % 360)), -1, -1, FRONT_MUX, 200);
+
+            turn(45, 0 + (direction * ((stretch * 90) % 360)));
+
+            blind_go(MEDIUM_SPEED, 0 + (direction * ((stretch * 90) % 360)), LEFT_MUX, 200, LEFT_MUX, 1200, RIGHT_MUX, 0, 1);
+        }
+    } else if (direction == COUNTERCLOCKWISE) {
+        esc_drive(1, MEDIUM_SPEED);
+
+        turn(-50, 270 + (direction * ((stretch * 90) % 360)));
+
+        esc_brake();
+
+        int firstObstacle = look();
+
+        if (firstObstacle == RED_RED || firstObstacle == RED_GREEN) {
+            esc_drive(1, MEDIUM_SPEED);
+
+            turn(45, 0 + (direction * ((stretch * 90) % 360)));
+
+            go(MEDIUM_SPEED, 0 + (direction * ((stretch * 90) % 360)), -1, -1, FRONT_MUX, 200);
+        } else {
+            esc_drive(1, MEDIUM_SPEED);
+
+            turn(-45, 240 + (direction * ((stretch * 90) % 360)));
+
+            go(MEDIUM_SPEED, 270 + (direction * ((stretch * 90) % 360)), -1, -1, FRONT_MUX, 200);
+
+            turn(45, 0 + (direction * ((stretch * 90) % 360)));
+
+            blind_go(MEDIUM_SPEED, 0 + (direction * ((stretch * 90) % 360)), LEFT_MUX, 200, LEFT_MUX, 1200, RIGHT_MUX, 0, 1);
+        }
+    }
+}
+
+int parallel_park() {
+    if (direction == CLOCKWISE) {
+        turn(45, 90);
+
+        turn(-45, 335);
+
+        go(MEDIUM_SPEED, 90, -1, -1, LEFT_MUX, SEE_WALL_DISTANCE);
+
+        esc_drive(0, SLOW_SPEED);
+
+        turn(-50, 85);
+
+        turn(50, 330);
+    } else if (direction == COUNTERCLOCKWISE) {
+        turn(-45, 270);
+
+        turn(45, 25);
+
+        go(MEDIUM_SPEED, 270, -1, -1, RIGHT_MUX, SEE_WALL_DISTANCE);
+
+        esc_drive(0, SLOW_SPEED);
+
+        turn(50, 275);
+
+        turn(-50, 30);
+    }
+}
+
+int obstacle_challenge() {
+    do {
+        i2cmux_switch(RIGHT_MUX);
+        usleep(50000); // 50ms
+        int rightDistance = tofReadDistance();
+        usleep(50000); // 50ms
+        i2cmux_switch(LEFT_MUX);
+        usleep(50000); // 50ms
+        int leftDistance = tofReadDistance();
+        usleep(50000); // 50ms
+
+        if (leftDistance <= SEE_WALL_DISTANCE && rightDistance >= SEE_WALL_DISTANCE) {
+            direction = CLOCKWISE;
+        } else if (leftDistance >= SEE_WALL_DISTANCE && rightDistance <= SEE_WALL_DISTANCE) {
+            direction = COUNTERCLOCKWISE;
+        }
+    } while ((leftDistance > SEE_WALL_DISTANCE && rightDistance > SEE_WALL_DISTANCE) || (leftDistance <= SEE_WALL_DISTANCE && rightDistance <= SEE_WALL_DISTANCE));
+
+    pull_out();
+
+    for (i = 1; i < 5; i++) {
+        stretch = i % 4;
+
+        if ((map[stretch] == GREEN_GREEN && direction == CLOCKWISE) || (map[stretch] == RED_RED && direction == COUNTERCLOCKWISE)) {
+            in_in();
+            in_blind_turn();
+        } else if ((map[stretch] == GREEN_RED && direction == CLOCKWISE) || (map[stretch] == RED_GREEN && direction == COUNTERCLOCKWISE)) {
+            in_out();
+            out_blind_turn();
+        } else if ((map[stretch] == RED_GREEN && direction == CLOCKWISE) || (map[stretch] == GREEN_RED && direction == COUNTERCLOCKWISE)) {
+            out_in_blind();
+            in_blind_turn();
+        } else if ((map[stretch] == RED_RED && direction == CLOCKWISE) || (map[stretch] == GREEN_GREEN && direction == COUNTERCLOCKWISE)) {
+            out_out();
+            out_blind_turn();
+        }
+    }
+
+    for (int i = 1; i < 12; i++) {
+        stretch = i % 4;
+        next_stretch = (i + 1) % 4;
+
+        if ((map[stretch] == GREEN_GREEN && direction == CLOCKWISE && (map[next_stretch] == RED_RED || map[next_stretch] == RED_GREEN)) || (map[stretch] == RED_RED && direction == COUNTERCLOCKWISE && (map[next_stretch] == GREEN_GREEN || map[next_stretch] == GREEN_RED))) {
+            in_in();
+            in_out_turn();
+        } else if ((map[stretch] == GREEN_GREEN && direction == CLOCKWISE && (map[next_stretch] == GREEN_GREEN || map[next_stretch] == GREEN_RED)) || (map[stretch] == RED_RED && direction == COUNTERCLOCKWISE && (map[next_stretch] == RED_RED || map[next_stretch] == RED_GREEN))) {
+            in_in();
+            in_in_turn();
+        } else if ((map[stretch] == GREEN_RED && direction == CLOCKWISE && (map[next_stretch] == RED_RED || map[next_stretch] == RED_GREEN)) || (map[stretch] == RED_GREEN && direction == COUNTERCLOCKWISE && (map[next_stretch] == GREEN_GREEN || map[next_stretch] == GREEN_RED))) {
+            in_out();
+            out_out_turn();
+        } else if ((map[stretch] == GREEN_RED && direction == CLOCKWISE && (map[next_stretch] == GREEN_GREEN || map[next_stretch] == GREEN_RED)) || (map[stretch] == RED_GREEN && direction == COUNTERCLOCKWISE && (map[next_stretch] == RED_RED || map[next_stretch] == RED_GREEN))) {
+            in_out();
+            out_in_turn();
+        } else if ((map[stretch] == RED_GREEN && direction == CLOCKWISE && (map[next_stretch] == RED_RED || map[next_stretch] == RED_GREEN)) || (map[stretch] == GREEN_RED && direction == COUNTERCLOCKWISE && (map[next_stretch] == GREEN_GREEN || map[next_stretch] == GREEN_RED))) {
+            out_in();
+            in_out_turn();
+        } else if ((map[stretch] == RED_GREEN && direction == CLOCKWISE && (map[next_stretch] == GREEN_GREEN || map[next_stretch] == GREEN_RED)) || (map[stretch] == GREEN_RED && direction == COUNTERCLOCKWISE && (map[next_stretch] == RED_RED || map[next_stretch] == RED_GREEN))) {
+            out_in();
+            in_in_turn();
+        } else if ((map[stretch] == RED_RED && direction == CLOCKWISE && (map[next_stretch] == RED_RED || map[next_stretch] == RED_GREEN)) || (map[stretch] == GREEN_GREEN && direction == COUNTERCLOCKWISE && (map[next_stretch] == GREEN_GREEN || map[next_stretch] == GREEN_RED))) {
+            out_out();
+            out_out_turn();
+        } else if ((map[stretch] == RED_RED && direction == CLOCKWISE && (map[next_stretch] == GREEN_GREEN || map[next_stretch] == GREEN_RED)) || (map[stretch] == GREEN_GREEN && direction == COUNTERCLOCKWISE && (map[next_stretch] == RED_RED || map[next_stretch] == RED_GREEN))) {
+            out_out();
+            out_in_turn();
+        }
+    }
+
+    parallel_park();
+}
+
+int open_challenge() {
+    esc_drive(1, 110);
+
+    i2cmux_switch(RIGHT_MUX);
+    usleep(50000); // 50ms
+    int sideDistance = tofReadDistance();
+    if (sideDistance > 500) {
+        turn(45, 70);
+        go(110, 70, -1, -1, FRONT_MUX, 300);
+        turn(-45, 0);
+    }
+
+    go(110, 0, -1, -1, FRONT_MUX, 300);
+
+    i2cmux_switch(RIGHT_MUX);
+    usleep(50000); // 50ms
+    sideDistance = tofReadDistance();
+    if (sideDistance < 2000) {
+        mux = LEFT_MUX;
+        not_mux = RIGHT_MUX;
+        direction = COUNTERCLOCKWISE;
+    } else {
+        mux = RIGHT_MUX;
+        not_mux = LEFT_MUX;
+        direction = CLOCKWISE;
+    }
+
+    for (int i = 1; i < 12; i++) {
+        i2cmux_switch(mux);
+        usleep(50000); // 50ms
+        int sideDistance = tofReadDistance();
+        if (sideDistance > 500) {
+            turn(45, 60 + ((direction) * ((i * 90) % 360)));
+            go(110, 60 + ((direction) * ((i * 90) % 360)), -1, -1, FRONT_MUX, 300);
+            turn(-45, 0 + ((direction) * ((i * 90) % 360)));
+        }
+        loose_go(110, 0 + ((i * 90) % 360), mux, 200, mux, 1200, not_mux, 150, 1);
+    }
+
+    turn(100, 0);
+
+    sleep(2);
+
+    esc_brake();
 }

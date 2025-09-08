@@ -5,7 +5,5 @@
 
 int main() {
     gpioPWM(13, 75);
-    sleep(2);
-    gpioTerminate();
 }
 #endif // STOP_C

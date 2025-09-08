@@ -9,6 +9,7 @@ Engineers competition.
 ## Contents
 
 - [About our Team](https://github.com/teostefan/WRO-2025-Future-Engineers-Canada/blob/main/README.md#about-our-team)
+- [Demo Video](https://github.com/teostefan/WRO-2025-Future-Engineers-Canada/blob/main/README.md#demo-video)
 - [Software Setup](https://github.com/teostefan/WRO-2025-Future-Engineers-Canada/blob/main/README.md#software-setup)
 - [Power and Sensor Management](https://github.com/teostefan/WRO-2025-Future-Engineers-Canada/blob/main/README.md#power-and-sensor-management)
 - [Obstacle Management](https://github.com/teostefan/WRO-2025-Future-Engineers-Canada/blob/main/README.md#obstacle-management)
@@ -16,7 +17,13 @@ Engineers competition.
 
 ## About our Team
 
+![Team Photo](https://github.com/teostefan/WRO-2025-Future-Engineers-Canada/blob/main/t-photos/serious.png)
+
 Oscar Barbieri is a student at the University of Ottawa and is studying software engineering, and Stefan Teodorescu is a student a Carleton University studying aerospace avionics. Last year, Oscar and Stefan participated in the WRO Future Innovators challenge and made it into the international finals in İzmir. This year, both students have decided to participate in the WRO Future Engineers competition as a means to further their knowledge regarding mechatronics and systems programming.
+
+## Demo Video
+
+A demonstration video of our robot performing both challenges can be found in the [```video``` directory](https://github.com/teostefan/WRO-2025-Future-Engineers-Canada/tree/main/video).
 
 ## Software Setup
 

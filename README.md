@@ -8,19 +8,19 @@ Engineers competition.
 
 # Contents
 
-- [About our team](https://github.com/teostefan/WRO-2025-Future-Engineers-Canada/wiki/Mobility-Management)
-- [Software setup](https://github.com/teostefan/WRO-2025-Future-Engineers-Canada/wiki/Obstacle-Management)
-- [Power and Sensor Management](https://github.com/teostefan/WRO-2025-Future-Engineers-Canada/wiki/Power-and-Sensor-Management)
-- [Obstacle Management]()
-- [Mobility Management]()
+- [About our Team](https://github.com/teostefan/WRO-2025-Future-Engineers-Canada/blob/main/README.md#about-our-team)
+- [Software Setup](https://github.com/teostefan/WRO-2025-Future-Engineers-Canada/blob/main/README.md#software-setup)
+- [Power and Sensor Management](https://github.com/teostefan/WRO-2025-Future-Engineers-Canada/blob/main/README.md#power-and-sensor-management)
+- [Obstacle Management](https://github.com/teostefan/WRO-2025-Future-Engineers-Canada/blob/main/README.md#obstacle-management)
+- [Mobility Management](https://github.com/teostefan/WRO-2025-Future-Engineers-Canada/blob/main/README.md#mobility-management)
 
-# About our team
+# About our Team
 
 Oscar Barbieri is a student at the University of Ottawa and is studying software engineering, and Stefan Teodorescu is a student a Carleton University studying aerospace avionics. Last year, Oscar and Stefan participated in the WRO Future Innovators challenge and made it into the international finals in İzmir. This year, both students have decided to participate in the WRO Future Engineers competition as a means to further their knowledge regarding mechatronics and systems programming.
 
-# Software setup
+# Software Setup
 
-## Compiling and running the robot's firmware (Linux)
+## Compiling and Running the Robot's Firmware (Linux)
 
 To get started, clone the repository and build the firmware using `make`:
 
@@ -43,7 +43,7 @@ Then, simply run the `main` executable in the generated `builds` folder:
 builds/main
 ```
 
-## Compiling and running individual tests
+## Compiling and Running Individual Tests
 
 To generate the test executables, run:
 
@@ -59,7 +59,7 @@ following example:
 builds/test_cv
 ```
 
-## Software dependencies
+## Software Dependencies
 
 If running on Linux, all of the below dependencies should be pre-installed.
 

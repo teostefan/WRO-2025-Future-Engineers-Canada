@@ -134,7 +134,7 @@
 #define GREEN_RED 4
 
 #define TURN_RANGE 30
-#define STOP_DISTANCE_RANGE 500
+#define STOP_DISTANCE_RANGE 200
 #define HUG_DISTANCE_RANGE 100
 
 int startDirection;

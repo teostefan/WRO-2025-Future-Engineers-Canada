@@ -193,7 +193,7 @@ int blind_go(int speed, float neutralHeading, int hugMux, int hugTarget, int sto
         esc_servo_steer(error);
 
         printf("stop distance: %d", stopDistance);
-    } while ((count < 2 && way) || ((stopDistance > stopTarget) && !way));
+    } while ((count < 2 && way) || ((stopDistance > stopTarget || safetyDistance < safetyTarget) && !way));
 
     return 0;
 }

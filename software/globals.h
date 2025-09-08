@@ -50,6 +50,9 @@
 #define PP_ADVANCE_SPEED 255
 #define FIRST_LAP_STRETCH_SPEED 255
 #define FIRST_LAP_TURN_SPEED 255
+#define SLOW_SPEED 100
+#define MEDIUM_SPEED 115
+#define FAST_SPEED 125
 
 #define MAX_STEERING 45.0
 #define STRAIGHT_STEERING 45.0
@@ -102,6 +105,9 @@
 #define FIRST_AVOIDED_P 0.1
 #define FIRST_WALL_P 0.1
 
+#define OPEN 1
+#define OBSTACLE 0
+
 #define FRONT 1
 #define REAR 0
 
@@ -142,6 +148,8 @@ int direction;
 int map[4];
 int firstObstacle;
 int stretch;
+int next_stretch;
+int challenge;
 struct PID_Controller pid = {KP, KI, KD, 0.0f, 0.0f};
 struct CV_CameraData cv_data = {0, 0, 0, 0};
 int frontDistance;
@@ -155,6 +163,8 @@ int rightCount;
 int leftCount;
 int distances[10];
 int error;
+int mux;
+int not_mux;
 struct bnoeul angles = {0.0, 0.0, 0.0};
 float zeroHeading;
 float trueHeading;

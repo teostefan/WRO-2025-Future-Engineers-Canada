@@ -70,7 +70,7 @@ int look() {
     return obstacles;
 }
 
-int loose_go(int speed, float neutralHeading, int hugMux, int hugTarget, int stopMux, int stopTarget, int way) {
+int blind_go(int speed, float neutralHeading, int hugMux, int hugTarget, int stopMux, int stopTarget, int way) {
     float targetHeading = neutralHeading + zeroHeading;
     if (targetHeading < 0) {
         targetHeading += 360;
@@ -616,7 +616,7 @@ int open_challenge() {
             go(110, 60 + ((direction) * ((i * 90) % 360)), -1, -1, FRONT_MUX, 300);
             turn(-45, 0 + ((direction) * ((i * 90) % 360)));
         }
-        loose_go(110, 0 + ((i * 90) % 360), mux, 200, mux, 1200, not_mux, 150, 1);
+        blind_go(110, 0 + ((i * 90) % 360), mux, 200, mux, 1200, not_mux, 150, 1);
     }
 
     turn(100, 0);

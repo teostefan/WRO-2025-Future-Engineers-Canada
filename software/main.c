@@ -14,8 +14,6 @@ int main() {
         usleep(50000); // 50ms
     }
 
-    sleep(2);
-
     BNO_init_i2cbus();
     usleep(50000); // 50ms
 
@@ -32,6 +30,16 @@ int main() {
     esc_servo_init();
     esc_servo_steer(0);
     esc_coast();
+
+    direction = COUNTERCLOCKWISE;
+    stretch = 0;
+
+    in_in();
+    in_in_turn();
+    stretch++;
+    in_out();
+
+    /*
 
     do {
         i2cmux_switch(FRONT_MUX);
@@ -55,6 +63,8 @@ int main() {
     } else if (challenge == OBSTACLE) {
         obstacle_challenge(); // see manoeuvres.c for more details
     }
+
+    */
 
     printf("stopping");
 

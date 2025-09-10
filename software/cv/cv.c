@@ -192,7 +192,7 @@ void CV_chromakey(CV_mask mask, const CV_frame hsv_frame, const unsigned char h[
     }
 }
 
-void CV_masktracker(CV_bounding_box_list *bboxes, const CV_mask mask, const unsigned int minsize) {
+void CV_masktracker(CV_bounding_box_list *bboxes, const CV_mask mask, const unsigned int minsize, const unsigned int maxsize) {
     bboxes->count = 0;                                           // Reset the bounding box count to dereference any previous boxes.
     unsigned int visited[CV_FRAME_HEIGHT][CV_FRAME_WIDTH] = {0}; // Visited pixels to avoid re-checking.
     CV_FOREACH(x, y) {
@@ -243,7 +243,7 @@ void CV_masktracker(CV_bounding_box_list *bboxes, const CV_mask mask, const unsi
                 .x = {left, right},
                 .y = {top, bottom}};
             // Check if the bounding box meets the minimum size requirement.
-            if ((box.x[1] - box.x[0] + 1) < minsize || (box.y[1] - box.y[0] + 1) < minsize) {
+            if ((box.x[1] - box.x[0] + 1) < minsize || (box.y[1] - box.y[0] + 1) < minsize || (box.x[1] - box.x[0] + 1) > maxsize) {
                 continue; // Skip this box if it is smaller than the minimum size.
             }
             if (bboxes->count < CV_MAX_BOUNDING_BOXES) {

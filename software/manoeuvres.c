@@ -22,7 +22,7 @@ int look() {
 
         // Detect green objects
         CV_chromakey(greenmask, greenframe, H_HM_GREEN, S_HM_GREEN, V_HM_GREEN);
-        CV_masktracker(&greenbboxes, greenmask, 15);
+        CV_masktracker(&greenbboxes, greenmask, 39, 75);
 
         CV_bounding_box *biggestgreenbox = &greenbboxes.boxes[0];
         for (size_t i = 0; i < greenbboxes.count; i++) {
@@ -38,7 +38,7 @@ int look() {
 
         // Detect red objects
         CV_chromakey(redmask, redframe, H_HM_RED, S_HM_RED, V_HM_RED);
-        CV_masktracker(&redbboxes, redmask, 15);
+        CV_masktracker(&redbboxes, redmask, 39, 75);
 
         CV_bounding_box *biggestredbox = &redbboxes.boxes[0];
         for (size_t i = 0; i < redbboxes.count; i++) {

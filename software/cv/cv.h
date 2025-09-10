@@ -218,6 +218,6 @@ void CV_chromakey(CV_mask mask, const CV_frame hsv_frame, const unsigned char h[
  * @param selector A color selector to match against.
  * @param minsize The minimum area percentage (0-100) of the frame that a detected region must occupy to be considered valid.
  */
-void CV_masktracker(CV_bounding_box_list *bboxes, const CV_mask mask, const unsigned int minsize);
+void CV_masktracker(CV_bounding_box_list *bboxes, const CV_mask mask, const unsigned int minsize, const unsigned int maxsize);
 
 #endif // CV_H

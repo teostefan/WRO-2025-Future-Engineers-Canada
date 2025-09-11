@@ -34,10 +34,57 @@ int main() {
     direction = COUNTERCLOCKWISE;
     stretch = 0;
 
-    in_in();
-    in_in_turn();
-    stretch++;
-    in_out();
+    out_out();
+    out_blind_turn();
+
+    for (int i = 1; i < 4; i++) {
+        stretch = i % 4;
+
+        if ((map[stretch] == GREEN_GREEN && direction == CLOCKWISE) || (map[stretch] == RED_RED && direction == COUNTERCLOCKWISE)) {
+            out_out();
+            out_blind_turn();
+        } else if ((map[stretch] == GREEN_RED && direction == CLOCKWISE) || (map[stretch] == RED_GREEN && direction == COUNTERCLOCKWISE)) {
+            out_in();
+            in_blind_turn();
+        } else if ((map[stretch] == RED_GREEN && direction == CLOCKWISE) || (map[stretch] == GREEN_RED && direction == COUNTERCLOCKWISE)) {
+            in_out();
+            out_blind_turn();
+        } else if ((map[stretch] == RED_RED && direction == CLOCKWISE) || (map[stretch] == GREEN_GREEN && direction == COUNTERCLOCKWISE)) {
+            in_in();
+            in_blind_turn();
+        }
+    }
+
+    for (int i = 0; i < 8; i++) {
+        stretch = i % 4;
+        next_stretch = (i + 1) % 4;
+
+        if ((map[stretch] == GREEN_GREEN && direction == CLOCKWISE && (map[next_stretch] == RED_RED || map[next_stretch] == RED_GREEN)) || (map[stretch] == RED_RED && direction == COUNTERCLOCKWISE && (map[next_stretch] == GREEN_GREEN || map[next_stretch] == GREEN_RED))) {
+            out_out();
+            out_in_turn();
+        } else if ((map[stretch] == GREEN_GREEN && direction == CLOCKWISE && (map[next_stretch] == GREEN_GREEN || map[next_stretch] == GREEN_RED)) || (map[stretch] == RED_RED && direction == COUNTERCLOCKWISE && (map[next_stretch] == RED_RED || map[next_stretch] == RED_GREEN))) {
+            out_out();
+            out_out_turn();
+        } else if ((map[stretch] == GREEN_RED && direction == CLOCKWISE && (map[next_stretch] == RED_RED || map[next_stretch] == RED_GREEN)) || (map[stretch] == RED_GREEN && direction == COUNTERCLOCKWISE && (map[next_stretch] == GREEN_GREEN || map[next_stretch] == GREEN_RED))) {
+            out_in();
+            in_in_turn();
+        } else if ((map[stretch] == GREEN_RED && direction == CLOCKWISE && (map[next_stretch] == GREEN_GREEN || map[next_stretch] == GREEN_RED)) || (map[stretch] == RED_GREEN && direction == COUNTERCLOCKWISE && (map[next_stretch] == RED_RED || map[next_stretch] == RED_GREEN))) {
+            out_in();
+            in_out_turn();
+        } else if ((map[stretch] == RED_GREEN && direction == CLOCKWISE && (map[next_stretch] == RED_RED || map[next_stretch] == RED_GREEN)) || (map[stretch] == GREEN_RED && direction == COUNTERCLOCKWISE && (map[next_stretch] == GREEN_GREEN || map[next_stretch] == GREEN_RED))) {
+            in_out();
+            out_in_turn();
+        } else if ((map[stretch] == RED_GREEN && direction == CLOCKWISE && (map[next_stretch] == GREEN_GREEN || map[next_stretch] == GREEN_RED)) || (map[stretch] == GREEN_RED && direction == COUNTERCLOCKWISE && (map[next_stretch] == RED_RED || map[next_stretch] == RED_GREEN))) {
+            in_out();
+            out_out_turn();
+        } else if ((map[stretch] == RED_RED && direction == CLOCKWISE && (map[next_stretch] == RED_RED || map[next_stretch] == RED_GREEN)) || (map[stretch] == GREEN_GREEN && direction == COUNTERCLOCKWISE && (map[next_stretch] == GREEN_GREEN || map[next_stretch] == GREEN_RED))) {
+            in_in();
+            in_in_turn();
+        } else if ((map[stretch] == RED_RED && direction == CLOCKWISE && (map[next_stretch] == GREEN_GREEN || map[next_stretch] == GREEN_RED)) || (map[stretch] == GREEN_GREEN && direction == COUNTERCLOCKWISE && (map[next_stretch] == RED_RED || map[next_stretch] == RED_GREEN))) {
+            in_in();
+            in_out_turn();
+        }
+    }
 
     /*
 

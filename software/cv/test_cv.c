@@ -26,7 +26,7 @@ int main() {
 
         // Detect green objects
         CV_chromakey(greenmask, greenframe, H_HM_GREEN, S_HM_GREEN, V_HM_GREEN);
-        CV_masktracker(&greenbboxes, greenmask, 39, 75);
+        CV_masktracker(&greenbboxes, greenmask, 30, 75);
 
         /*
         if (!CV_getRGBframe(greenframe, camera)) return 0;                 // Load an RGB frame for display.
@@ -48,7 +48,7 @@ int main() {
 
         // Detect red objects
         CV_chromakey(redmask, redframe, H_HM_RED, S_HM_RED, V_HM_RED);
-        CV_masktracker(&redbboxes, redmask, 39, 75);
+        CV_masktracker(&redbboxes, redmask, 35, 75);
 
         if (!CV_getRGBframe(redframe, camera)) return 0;               // Load an RGB frame for display.
         CV_drawbb(redframe, &redbboxes, (unsigned char[]){255, 0, 0}); // Draw bounding boxes in red.

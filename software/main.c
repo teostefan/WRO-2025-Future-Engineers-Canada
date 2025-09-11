@@ -31,9 +31,6 @@ int main() {
     esc_servo_steer(0);
     esc_coast();
 
-    direction = CLOCKWISE;
-    stretch = 0;
-
     do {
         i2cmux_switch(FRONT_MUX);
         usleep(50000); // 50ms

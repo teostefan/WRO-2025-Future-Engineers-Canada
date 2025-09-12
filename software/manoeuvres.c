@@ -275,7 +275,7 @@ int in_out() {
         turn(45, ((90 + direction * ((stretch * 90))) % 360));
 
         if (stretch == 0) {
-            go(SLOW_SPEED, ((90 + direction * ((stretch * 90))) % 360), -1, -1, REAR_MUX, 400, LEFT_MUX, 0, 1);
+            go(SLOW_SPEED, ((90 + direction * ((stretch * 90))) % 360), -1, -1, REAR_MUX, 200, LEFT_MUX, 0, 1);
         } else {
             go(SLOW_SPEED, ((90 + direction * ((stretch * 90))) % 360), -1, -1, FRONT_MUX, 300, LEFT_MUX, 0, 0);
         }
@@ -352,7 +352,7 @@ int in_in_turn() {
     if (direction == CLOCKWISE) {
         esc_drive(0, MEDIUM_SPEED);
 
-        usleep(1500000);
+        usleep(1250000);
 
         esc_drive(1, SLOW_SPEED);
 
@@ -364,7 +364,7 @@ int in_in_turn() {
     } else if (direction == COUNTERCLOCKWISE) {
         esc_drive(0, MEDIUM_SPEED);
 
-        usleep(1500000);
+        usleep(1250000);
 
         esc_drive(1, SLOW_SPEED);
 
@@ -383,7 +383,7 @@ int in_in_turn() {
 int in_out_turn() {
     if (direction == CLOCKWISE) {
         if (stretch == 0) {
-            go(SLOW_SPEED, ((0 + direction * ((stretch * 90))) % 360), -1, -1, FRONT_MUX, 600, LEFT_MUX, 0, 0);
+            usleep(750000);
         } else {
             go(SLOW_SPEED, ((0 + direction * ((stretch * 90))) % 360), -1, -1, FRONT_MUX, 300, LEFT_MUX, 0, 0);
         }
@@ -415,7 +415,7 @@ int out_in_turn() {
 
         go(SLOW_SPEED, ((125 + direction * ((stretch * 90))) % 360), -1, -1, FRONT_MUX, 325, LEFT_MUX, 0, 0);
 
-        turn(45, ((90 + direction * ((stretch * 90))) % 360));
+        turn(-45, ((90 + direction * ((stretch * 90))) % 360));
 
         go(MEDIUM_SPEED, ((90 + direction * ((stretch * 90))) % 360), -1, -1, REAR_MUX, 300, LEFT_MUX, 0, 1);
 
@@ -483,7 +483,7 @@ int in_blind_turn() {
 
         go(SLOW_SPEED, ((0 + direction * ((stretch * 90))) % 360), -1, -1, FRONT_MUX, 300, LEFT_MUX, 0, 0);
 
-        turn(45, ((130 + direction * ((stretch * 90))) % 360));
+        turn(45, ((135 + direction * ((stretch * 90))) % 360));
 
         esc_brake();
 
@@ -523,7 +523,7 @@ int in_blind_turn() {
 
         go(SLOW_SPEED, ((0 + direction * ((stretch * 90))) % 360), -1, -1, FRONT_MUX, 200, RIGHT_MUX, 0, 0);
 
-        turn(-45, ((230 + direction * ((stretch * 90))) % 360));
+        turn(-45, ((225 + direction * ((stretch * 90))) % 360));
 
         esc_brake();
 
@@ -551,7 +551,7 @@ int out_blind_turn() {
     if (direction == CLOCKWISE) {
         esc_drive(1, SLOW_SPEED);
 
-        turn(45, ((130 + direction * ((stretch * 90))) % 360));
+        turn(45, ((145 + direction * ((stretch * 90))) % 360));
 
         esc_brake();
 
@@ -584,7 +584,7 @@ int out_blind_turn() {
     } else if (direction == COUNTERCLOCKWISE) {
         esc_drive(1, SLOW_SPEED);
 
-        turn(-45, ((230 + direction * ((stretch * 90))) % 360));
+        turn(-45, ((215 + direction * ((stretch * 90))) % 360));
 
         esc_brake();
 
@@ -647,7 +647,7 @@ int pull_out() {
         } else {
             esc_drive(1, SLOW_SPEED);
 
-            turn(-45, ((0 + direction * ((stretch * 90))) % 360));
+            turn(-45, ((345 + direction * ((stretch * 90))) % 360));
 
             esc_brake();
 
@@ -867,7 +867,7 @@ int open_challenge() {
             go(MEDIUM_SPEED, ((60 + direction * ((stretch * 90))) % 360), -1, -1, FRONT_MUX, 300, LEFT_MUX, 0, 0);
             turn(-45, ((0 + direction * ((i * 90))) % 360));
         }
-        go(110, ((0 + direction * ((i * 90))) % 360), mux, 200, mux, 1200, not_mux, 150, 1);
+        go(110, ((0 + direction * ((i * 90))) % 360), mux, 200, mux, 1200, not_mux, 50, 1);
     }
 
     turn(100, 0);

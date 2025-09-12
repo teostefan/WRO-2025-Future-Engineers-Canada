@@ -26,7 +26,7 @@ int main() {
 
         // Detect green objects
         CV_chromakey(greenmask, greenframe, H_HM_GREEN, S_HM_GREEN, V_HM_GREEN);
-        CV_masktracker(&greenbboxes, greenmask, 30, 75);
+        CV_masktracker(&greenbboxes, greenmask, 30, 600);
 
         /*
         if (!CV_getRGBframe(greenframe, camera)) return 0;                 // Load an RGB frame for display.

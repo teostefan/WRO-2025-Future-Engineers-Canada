@@ -243,7 +243,7 @@ void CV_masktracker(CV_bounding_box_list *bboxes, const CV_mask mask, const unsi
                 .x = {left, right},
                 .y = {top, bottom}};
             // Check if the bounding box meets the minimum size requirement.
-            if ((box.y[1] - box.y[0] + 1) < minsize || (box.x[1] - box.x[0] + 1) > maxsize || box.y[0] > 350 || box.y[1] > 350) {
+            if ((box.y[1] - box.y[0] + 1) < minsize || ((box.x[1] - box.x[0] + 1) > maxsize && (box.x[0] < 20 || box.x[1] > 600)) || box.y[0] > 350 || box.y[1] > 350) {
                 continue; // Skip this box if it is smaller than the minimum size.
             }
             if (bboxes->count < CV_MAX_BOUNDING_BOXES) {

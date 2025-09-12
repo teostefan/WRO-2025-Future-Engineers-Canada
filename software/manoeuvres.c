@@ -22,7 +22,7 @@ int first_look() {
 
         // Detect green objects
         CV_chromakey(greenmask, greenframe, H_HM_GREEN, S_HM_GREEN, V_HM_GREEN);
-        CV_masktracker(&greenbboxes, greenmask, 39, 300);
+        CV_masktracker(&greenbboxes, greenmask, 35, 600);
 
         CV_bounding_box *biggestgreenbox = &greenbboxes.boxes[0];
         for (size_t i = 0; i < greenbboxes.count; i++) {
@@ -38,7 +38,7 @@ int first_look() {
 
         // Detect red objects
         CV_chromakey(redmask, redframe, H_HM_RED, S_HM_RED, V_HM_RED);
-        CV_masktracker(&redbboxes, redmask, 39, 300);
+        CV_masktracker(&redbboxes, redmask, 35, 75);
 
         CV_bounding_box *biggestredbox = &redbboxes.boxes[0];
         for (size_t i = 0; i < redbboxes.count; i++) {
@@ -254,9 +254,9 @@ int turn(int steeringAngle, float targetHeading) {
 
 int in_in() {
     if (direction == CLOCKWISE) {
-        go(SLOW_SPEED, ((0 + direction * ((stretch * 90))) % 360), RIGHT_MUX, 200, RIGHT_MUX, 1200, LEFT_MUX, 0, 1);
+        go(MEDIUM_SPEED, ((0 + direction * ((stretch * 90))) % 360), RIGHT_MUX, 200, RIGHT_MUX, 1200, LEFT_MUX, 0, 1);
     } else if (direction == COUNTERCLOCKWISE) {
-        go(SLOW_SPEED, ((0 + direction * ((stretch * 90))) % 360), LEFT_MUX, 200, LEFT_MUX, 1200, RIGHT_MUX, 0, 1);
+        go(MEDIUM_SPEED, ((0 + direction * ((stretch * 90))) % 360), LEFT_MUX, 200, LEFT_MUX, 1200, RIGHT_MUX, 0, 1);
     }
 
     return 0;
@@ -270,7 +270,13 @@ int in_out() {
 
         turn(45, ((15 + direction * ((stretch * 90))) % 360));
 
-        go(SLOW_SPEED, ((0 + direction * ((stretch * 90))) % 360), LEFT_MUX, 200, FRONT_MUX, 300, LEFT_MUX, 50, 0);
+        go(MEDIUM_SPEED, ((0 + direction * ((stretch * 90))) % 360), LEFT_MUX, 200, FRONT_MUX, 450, LEFT_MUX, 50, 0);
+
+        esc_brake();
+
+        usleep(250000);
+
+        esc_drive(1, SLOW_SPEED);
     } else if (direction == COUNTERCLOCKWISE) {
         turn(45, ((90 + direction * ((stretch * 90))) % 360));
 
@@ -290,7 +296,13 @@ int in_out() {
             turn(-45, ((345 + direction * ((stretch * 90))) % 360));
         }
 
-        go(SLOW_SPEED, ((0 + direction * ((stretch * 90))) % 360), RIGHT_MUX, 200, FRONT_MUX, 300, RIGHT_MUX, 50, 0);
+        go(MEDIUM_SPEED, ((0 + direction * ((stretch * 90))) % 360), RIGHT_MUX, 200, FRONT_MUX, 450, RIGHT_MUX, 50, 0);
+
+        esc_brake();
+
+        usleep(250000);
+
+        esc_drive(1, SLOW_SPEED);
     }
 
     return 0;
@@ -304,7 +316,7 @@ int out_in() {
 
         turn(-45, ((345 + direction * ((stretch * 90))) % 360));
 
-        go(SLOW_SPEED, ((0 + direction * ((stretch * 90))) % 360), RIGHT_MUX, 200, RIGHT_MUX, 1200, LEFT_MUX, 0, 1);
+        go(MEDIUM_SPEED, ((0 + direction * ((stretch * 90))) % 360), RIGHT_MUX, 200, RIGHT_MUX, 1200, LEFT_MUX, 0, 1);
     } else if (direction == COUNTERCLOCKWISE) {
         turn(-45, ((270 + direction * ((stretch * 90))) % 360));
 
@@ -312,7 +324,7 @@ int out_in() {
 
         turn(45, ((15 + direction * ((stretch * 90))) % 360));
 
-        go(SLOW_SPEED, ((0 + direction * ((stretch * 90))) % 360), LEFT_MUX, 200, LEFT_MUX, 1200, RIGHT_MUX, 0, 1);
+        go(MEDIUM_SPEED, ((0 + direction * ((stretch * 90))) % 360), LEFT_MUX, 200, LEFT_MUX, 1200, RIGHT_MUX, 0, 1);
     }
 
     return 0;
@@ -321,16 +333,23 @@ int out_in() {
 int out_out() {
     if (direction == CLOCKWISE) {
         if (stretch == 0) {
-            sleep(1);
+            usleep(2500000);
 
             turn(-45, ((300 + direction * ((stretch * 90))) % 360));
 
             turn(45, ((15 + direction * ((stretch * 90))) % 360));
         }
-        go(SLOW_SPEED, ((0 + direction * ((stretch * 90))) % 360), LEFT_MUX, 200, FRONT_MUX, 300, LEFT_MUX, 50, 0);
+        go(MEDIUM_SPEED, ((0 + direction * ((stretch * 90))) % 360), LEFT_MUX, 200, FRONT_MUX, 450, LEFT_MUX, 50, 0);
+
+        esc_brake();
+
+        usleep(250000);
+
+        esc_drive(1, SLOW_SPEED);
     } else if (direction == COUNTERCLOCKWISE) {
-        go(SLOW_SPEED, ((0 + direction * ((stretch * 90))) % 360), RIGHT_MUX, 200, FRONT_MUX, 300, RIGHT_MUX, 50, 0);
         if (stretch == 0) {
+            go(SLOW_SPEED, ((0 + direction * ((stretch * 90))) % 360), RIGHT_MUX, 200, FRONT_MUX, 300, RIGHT_MUX, 50, 0);
+
             turn(-45, ((290 + direction * ((stretch * 90))) % 360));
 
             turn(45, ((15 + direction * ((stretch * 90))) % 360));
@@ -341,7 +360,21 @@ int out_out() {
 
             turn(-45, ((345 + direction * ((stretch * 90))) % 360));
 
-            go(SLOW_SPEED, ((0 + direction * ((stretch * 90))) % 360), RIGHT_MUX, 200, FRONT_MUX, 300, RIGHT_MUX, 50, 0);
+            go(MEDIUM_SPEED, ((0 + direction * ((stretch * 90))) % 360), RIGHT_MUX, 200, FRONT_MUX, 450, RIGHT_MUX, 50, 0);
+
+            esc_brake();
+
+            usleep(250000);
+
+            esc_drive(1, SLOW_SPEED);
+        } else {
+            go(MEDIUM_SPEED, ((0 + direction * ((stretch * 90))) % 360), RIGHT_MUX, 200, FRONT_MUX, 400, RIGHT_MUX, 50, 0);
+
+            esc_brake();
+
+            usleep(250000);
+
+            esc_drive(1, SLOW_SPEED);
         }
     }
 
@@ -360,7 +393,7 @@ int in_in_turn() {
 
         go(MEDIUM_SPEED, ((90 + direction * ((stretch * 90))) % 360), -1, -1, REAR_MUX, 300, RIGHT_MUX, 0, 1);
 
-        usleep(1750000);
+        usleep(1500000);
     } else if (direction == COUNTERCLOCKWISE) {
         esc_drive(0, MEDIUM_SPEED);
 
@@ -374,7 +407,7 @@ int in_in_turn() {
 
         go(MEDIUM_SPEED, ((270 + direction * ((stretch * 90))) % 360), -1, -1, REAR_MUX, 300, RIGHT_MUX, 0, 1);
 
-        usleep(1750000);
+        usleep(1500000);
     }
 
     return 0;
@@ -382,8 +415,12 @@ int in_in_turn() {
 
 int in_out_turn() {
     if (direction == CLOCKWISE) {
-        if (stretch == 0) {
+        if (stretch == 3) {
+            esc_brake();
+
             usleep(750000);
+
+            esc_drive(1, SLOW_SPEED);
         } else {
             go(SLOW_SPEED, ((0 + direction * ((stretch * 90))) % 360), -1, -1, FRONT_MUX, 300, LEFT_MUX, 0, 0);
         }
@@ -392,14 +429,14 @@ int in_out_turn() {
 
         go(MEDIUM_SPEED, ((90 + direction * ((stretch * 90))) % 360), LEFT_MUX, 200, REAR_MUX, 300, RIGHT_MUX, 0, 1);
 
-        sleep(1);
+        usleep(1500000);
     } else if (direction == COUNTERCLOCKWISE) {
         go(SLOW_SPEED, ((0 + direction * ((stretch * 90))) % 360), -1, -1, FRONT_MUX, 300, RIGHT_MUX, 0, 0);
         turn(-45, ((270 + direction * ((stretch * 90))) % 360));
 
         go(MEDIUM_SPEED, ((270 + direction * ((stretch * 90))) % 360), RIGHT_MUX, 200, REAR_MUX, 300, LEFT_MUX, 0, 1);
 
-        sleep(1);
+        usleep(1500000);
     }
 
     return 0;
@@ -445,12 +482,12 @@ int out_out_turn() {
 
         turn(45, ((90 + direction * ((stretch * 90))) % 360));
 
-        if (stretch == 0) {
+        if (stretch == 3) {
             go(SLOW_SPEED, ((0 + direction * ((stretch * 90))) % 360), RIGHT_MUX, 200, FRONT_MUX, 300, RIGHT_MUX, 50, 0);
 
-            turn(45, ((70 + direction * ((stretch * 90))) % 360));
+            turn(45, ((160 + direction * ((stretch * 90))) % 360));
 
-            turn(-45, ((345 + direction * ((stretch * 90))) % 360));
+            turn(-45, ((75 + direction * ((stretch * 90))) % 360));
 
             usleep(500000);
         } else {
@@ -481,9 +518,9 @@ int in_blind_turn() {
 
         turn(45, ((0 + direction * ((stretch * 90))) % 360));
 
-        go(SLOW_SPEED, ((0 + direction * ((stretch * 90))) % 360), -1, -1, FRONT_MUX, 300, LEFT_MUX, 0, 0);
+        go(SLOW_SPEED, ((0 + direction * ((stretch * 90))) % 360), LEFT_MUX, 200, FRONT_MUX, 300, LEFT_MUX, 0, 0);
 
-        turn(45, ((135 + direction * ((stretch * 90))) % 360));
+        turn(45, ((145 + direction * ((stretch * 90))) % 360));
 
         esc_brake();
 
@@ -492,17 +529,15 @@ int in_blind_turn() {
         if (map[(stretch + 1) % 4] == GREEN_GREEN || map[(stretch + 1) % 4] == GREEN_RED) {
             esc_drive(1, SLOW_SPEED);
 
-            turn(-45, ((120 + direction * ((stretch * 90))) % 360));
+            if (stretch == 3) {
+                usleep(750000);
 
-            if (stretch == 0) {
-                go(SLOW_SPEED, ((0 + direction * ((stretch * 90))) % 360), RIGHT_MUX, 200, FRONT_MUX, 300, RIGHT_MUX, 50, 0);
+                turn(-45, ((75 + direction * ((stretch * 90))) % 360));
 
-                turn(45, ((70 + direction * ((stretch * 90))) % 360));
-
-                turn(-45, ((345 + direction * ((stretch * 90))) % 360));
-
-                usleep(500000);
+                usleep(1500000);
             } else {
+                turn(-45, ((60 + direction * ((stretch * 90))) % 360));
+
                 go(MEDIUM_SPEED, ((90 + direction * ((stretch * 90))) % 360), LEFT_MUX, 200, REAR_MUX, 300, RIGHT_MUX, 0, 1);
 
                 sleep(1);
@@ -521,9 +556,9 @@ int in_blind_turn() {
 
         turn(-45, ((0 + direction * ((stretch * 90))) % 360));
 
-        go(SLOW_SPEED, ((0 + direction * ((stretch * 90))) % 360), -1, -1, FRONT_MUX, 200, RIGHT_MUX, 0, 0);
+        go(SLOW_SPEED, ((0 + direction * ((stretch * 90))) % 360), RIGHT_MUX, 200, FRONT_MUX, 200, RIGHT_MUX, 0, 0);
 
-        turn(-45, ((225 + direction * ((stretch * 90))) % 360));
+        turn(-45, ((215 + direction * ((stretch * 90))) % 360));
 
         esc_brake();
 
@@ -549,8 +584,6 @@ int in_blind_turn() {
 
 int out_blind_turn() {
     if (direction == CLOCKWISE) {
-        esc_drive(1, SLOW_SPEED);
-
         turn(45, ((145 + direction * ((stretch * 90))) % 360));
 
         esc_brake();
@@ -558,20 +591,17 @@ int out_blind_turn() {
         map[(stretch + 1) % 4] = look();
 
         if (map[(stretch + 1) % 4] == GREEN_GREEN || map[(stretch + 1) % 4] == GREEN_RED) {
-
             esc_drive(1, SLOW_SPEED);
 
-            turn(-45, ((100 + direction * ((stretch * 90))) % 360));
+            if (stretch == 3) {
+                usleep(750000);
 
-            if (stretch == 0) {
-                go(SLOW_SPEED, ((0 + direction * ((stretch * 90))) % 360), RIGHT_MUX, 200, FRONT_MUX, 300, RIGHT_MUX, 50, 0);
+                turn(-45, ((75 + direction * ((stretch * 90))) % 360));
 
-                turn(45, ((70 + direction * ((stretch * 90))) % 360));
-
-                turn(-45, ((345 + direction * ((stretch * 90))) % 360));
-
-                usleep(500000);
+                usleep(1500000);
             } else {
+                turn(-45, ((60 + direction * ((stretch * 90))) % 360));
+
                 go(MEDIUM_SPEED, ((90 + direction * ((stretch * 90))) % 360), LEFT_MUX, 200, REAR_MUX, 300, RIGHT_MUX, 0, 1);
 
                 sleep(1);
@@ -582,8 +612,6 @@ int out_blind_turn() {
             out_in_turn();
         }
     } else if (direction == COUNTERCLOCKWISE) {
-        esc_drive(1, SLOW_SPEED);
-
         turn(-45, ((215 + direction * ((stretch * 90))) % 360));
 
         esc_brake();
@@ -635,7 +663,7 @@ int pull_out() {
         } else if (firstObstacle == RED_RED || firstObstacle == RED_GREEN) {
             esc_drive(1, SLOW_SPEED);
 
-            turn(45, ((120 + direction * ((stretch * 90))) % 360));
+            turn(45, ((110 + direction * ((stretch * 90))) % 360));
 
             go(SLOW_SPEED, ((0 + direction * ((stretch * 90))) % 360), -1, -1, FRONT_MUX, 300, LEFT_MUX, 0, 0);
 

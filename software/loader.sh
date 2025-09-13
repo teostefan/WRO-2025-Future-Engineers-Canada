@@ -1,10 +1,11 @@
 #!/bin/bash
 
 is_running=false
-debounce_time=0.5 # Seconds
+debounce_time=2 # Seconds
 last_press_time=0
 
-echo "Script ran at $(date)" >> /home/admin/autostart.log
+raspi-gpio set 27 op dh
+raspi-gpio set 22 op dl
 
 while true; do
     value=$(raspi-gpio get 17 | grep -o 'level=.' | cut -d= -f2)
@@ -17,11 +18,13 @@ while true; do
                 echo "Button press detected; starting main program."
                 sudo /home/admin/Documents/WRO-2025-Future-Engineers-Canada/builds/main &
                 is_running=true
+                raspi-gpio set 22 op dh
             else
                 echo "Button press detected; stopping main program."
                 sudo pkill -f "/home/admin/Documents/WRO-2025-Future-Engineers-Canada/builds/main"
                 sudo /home/admin/Documents/WRO-2025-Future-Engineers-Canada/builds/stop &
                 raspi-gpio set 23 op dl
+                raspi-gpio set 22 op dl
                 is_running=false
             fi
             last_press_time=$current_time
